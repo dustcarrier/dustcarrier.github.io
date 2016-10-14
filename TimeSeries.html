@@ -1,0 +1,28 @@
+<style>
+text {
+	font: bold 100px monospace;
+}
+.enter {
+	fill: green;
+}
+.update {
+	fill: #333;
+}
+.exit {
+	fill: brown;
+}
+</style>
+
+<svg width="960" height="500"></svg>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+
+<script>
+var svg = d3.select("svg");
+var height = +svg.attr("height");
+var width = +svg.attr("width");
+var g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
+
+d3.csv("data/blma_time_series.csv", function(data) {
+	console.log(data[0])
+})
+</script>
