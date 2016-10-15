@@ -196,7 +196,7 @@ function mouseMove() {
     //.style("left", function(d){return xScale(d.Date)+"px"})
     //.style("top", function(d){return yScale(d.Circulation)+"px"})
     .html(function(d){
-      return "Magazine: "+d.Title+
+      return "<b>"+d.Title+"</b>"+
       "<br>Circulation: " + (d.Circulation)+
       "<br>Date: " + formatTime(d.Date);
     });
