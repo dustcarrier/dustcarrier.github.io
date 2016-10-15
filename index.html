@@ -16,6 +16,27 @@
   text-align: center;
   height: 50px;
   width: 150px;
+  pointer-events:none;
+}
+.glyphicon-plus{
+  font-size:4.5vw;
+  color:#444444;
+  opacity: 0.8;
+  text-align: center;
+  margin-left: 0.5vw;
+  position: relative;
+  top: 50%;
+  transform: perspective(1px) translateY(-50%);
+}
+.data-panel{
+  background-color: #999999;
+  margin: 10px;
+  text-align: center;
+  vertical-align: middle;
+  display:block;
+  padding-top: 1.5vw;
+  padding-bottom: 2.0vw;
+  height: 15vh;
 }
 </style>
 
@@ -29,7 +50,32 @@
       <ul class="dropdown-menu" id="dropdown-menu" role="menu" aria-labelledby="menu1">
       </ul>
     </div>
+
+    <h1 class="display-4" style="text-align:center;">Example of Dynamic Time Series</h1>
     <svg class="main-chart" width="1080" height="720"></svg>
+
+    <div class="row" id="data-info" width="1080" height="420">
+        <div class="col-sm-3">
+          <div class="col-sm-12 data-panel">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="col-sm-12 data-panel">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="col-sm-12 data-panel">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="col-sm-12 data-panel">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </div>
+        </div>
+    </div>
   </div>
 </body>
 
@@ -49,7 +95,7 @@ var svgHeight = +svg.attr("height");
 var svgWidth = +svg.attr("width");
 
 var gMargins = {
-  top:40,
+  top:10,
   right:0,
   bottom:20,
   left:40
@@ -105,7 +151,7 @@ function closestData(data, mouse) {
 }
 
 
-
+var formatTime = d3.timeFormat("%b %e, %Y");
 function mouseMove() {
   var mouse = d3.mouse(this);
   lineRef.attr("x", mouse[0]); //set the location of the reference bar
@@ -124,29 +170,38 @@ function mouseMove() {
   dots.enter() //append new dots
     .append("circle")
     .attr("r", 4)
-    .attr("fill", pathType(function(d){return d.Title}))
+    .attr("fill", function(d){
+      return d3.color(pathType(d.Title)).darker()})
   .merge(dots) //merge update and enter selections
     .attr("cx", function(d){return xScale(d.Date)})
     .attr("cy", function(d){return yScale(d.Circulation)});
 
   dots.exit().remove();
 
-  var tooltips = tooltipContainer.selectAll(".tooltip")
+  var tooltips = tooltipContainer.selectAll(".data-panel")
     .data(closestDataPerLine);
-  //have enter, use merge?
 
-  tooltips.enter()
+    /**
+.enter()
     .append("div")
-    .attr("class", "tooltip")
-    // .attr("fill-opacity", 0.5)
+    .attr("class", "data-panel")
   .merge(tooltips)
-    .style("left", function(d){return xScale(d.Date)+"px"})
-    .style("top", function(d){return yScale(d.Circulation)+"px"})
+    */
+    //If set amount of divs, then don't enter and append any new ones
+
+  tooltips
+    .style("background-color", function(d){
+      return d3.color(pathType(d.Title)).brighter()
+    })
+    //.style("left", function(d){return xScale(d.Date)+"px"})
+    //.style("top", function(d){return yScale(d.Circulation)+"px"})
     .html(function(d){
-      return "Circulation: " + (d.Circulation);
+      return "Magazine: "+d.Title+
+      "<br>Circulation: " + (d.Circulation)+
+      "<br>Date: " + formatTime(d.Date);
     });
 
-    tooltips.exit().remove();
+    // tooltips.exit().remove();
 
 }
 
@@ -168,9 +223,9 @@ var lineFn = d3.line()
 //Clean the data
 var parseTime = d3.timeParse("%d %b %Y");
 
-var tooltipContainer = d3.select("#tooltip-container");
 
 
+var tooltipContainer = d3.select("#data-info");
 
 var xScale = d3.scaleTime(); 
 
@@ -187,6 +242,13 @@ var gXAxis = svg.append("g")
 
 var gYAxis = svg.append("g")
   .attr("transform", "translate("+gMargins.left+","+gMargins.top+")");
+
+// svg.append("text")
+//   .attr("x", (width/2))
+//   .attr("y", (gMargins.top / 2))
+//   .attr("text-anchor", "middle")
+//   .style("font-size", "16px")
+//   .text("Dynamic Example of Time Series");
 
 
 var gDots = svg.append("g")
@@ -217,9 +279,9 @@ function loadData(abrv, data) {
 
       var yAxis = d3.axisLeft(yScale);
 
-      gXAxis.call(xAxis);
+      gXAxis.transition().call(xAxis);
 
-      gYAxis.call(yAxis);
+      gYAxis.transition().call(yAxis);
 
       datas.push(data);
 
@@ -233,9 +295,12 @@ function loadData(abrv, data) {
       for (var i = 0; i < datas.length; i++) {
         
         var line1 = gCharts.append("path")
+          .attr("opacity", 0)
           .attr("stroke", pathType(datas[i][0].Title))
           .attr("fill-opacity", 0)
           .attr("d", lineFn(datas[i]))
+          .transition()
+          .attr("opacity", 1)
 
         var points = gCharts.selectAll(".point")
           .data(datas[i])
@@ -288,9 +353,10 @@ var magazines = [
   {name:"Black Mask", abrv:"BLMA"},
   {name:"New Yorker", abrv:"NEYO"}
 ];
+var dataD = {"BLMA": data, "NEYO": neyoData};
 $(document).ready(function(){
 
-  //populate the dropdown
+  //populate the dropdown according to the js object
   var dropDownUl = $("#dropdown-menu");
   magazines.forEach(function(d){
     //      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Black Mask</a></li>
@@ -306,8 +372,10 @@ $(document).ready(function(){
 
   $(".dropdown-magazine").click(function(){
     var magAbrv = $(this).attr("id");
-    loadData(magAbrv);
+    // loadData(magAbrv);
+    loadData(magAbrv, dataD[magAbrv])
   })
+  loadData("BLMA", dataD["BLMA"]);
 
   
 });
