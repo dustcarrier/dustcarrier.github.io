@@ -1,7 +1,5 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <style>
-text {
-	font: bold 100px monospace;
-}
 .enter {
 	fill: green;
 }
@@ -11,18 +9,359 @@ text {
 .exit {
 	fill: brown;
 }
+.tooltip{
+  position: absolute;
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff4444;
+  border-radius: 2px;
+  text-align: center;
+  height: 30px;
+  width: 150px;
+}
 </style>
 
-<svg width="960" height="500"></svg>
+
+<body>
+  <div id="tooltip-container"></div>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" id="menu1" type="button" data-toggle="dropdown">Magazines
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu" id="dropdown-menu" role="menu" aria-labelledby="menu1">
+    </ul>
+  </div>
+  <svg width="1080" height="720"></svg>
+</body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
 <script>
-var svg = d3.select("svg");
-var height = +svg.attr("height");
-var width = +svg.attr("width");
-var g = svg.append("g").attr("transform", "translate(32," + (height / 2) + ")");
+data = [{"Title":"Black Mask","Type":"Pulp","Circulation":"58,618","Price":"0.00","Year":"1925","Month":"8","Date":"01 Aug 1925"},{"Title":"Black Mask","Type":"Pulp","Circulation":"63,224","Price":"0.00","Year":"1925","Month":"9","Date":"01 Sep 1925"},{"Title":"Black Mask","Type":"Pulp","Circulation":"61,929","Price":"0.00","Year":"1925","Month":"10","Date":"01 Oct 1925"},{"Title":"Black Mask","Type":"Pulp","Circulation":"65,231","Price":"0.00","Year":"1925","Month":"11","Date":"01 Nov 1925"},{"Title":"Black Mask","Type":"Pulp","Circulation":"61,738","Price":"0.00","Year":"1925","Month":"12","Date":"01 Dec 1925"},{"Title":"Black Mask","Type":"Pulp","Circulation":"68,816","Price":"0.00","Year":"1926","Month":"1","Date":"01 Jan 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"78,230","Price":"0.00","Year":"1926","Month":"2","Date":"01 Feb 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"71,993","Price":"0.00","Year":"1926","Month":"3","Date":"01 Mar 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"72,647","Price":"0.00","Year":"1926","Month":"4","Date":"01 Apr 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,815","Price":"0.00","Year":"1926","Month":"5","Date":"01 May 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,822","Price":"0.00","Year":"1926","Month":"6","Date":"01 Jun 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,282","Price":"0.00","Year":"1926","Month":"7","Date":"01 Jul 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"70,047","Price":"0.00","Year":"1926","Month":"8","Date":"01 Aug 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"80,586","Price":"0.00","Year":"1926","Month":"9","Date":"01 Sep 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"72,957","Price":"0.00","Year":"1926","Month":"10","Date":"01 Oct 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"69,693","Price":"0.00","Year":"1926","Month":"11","Date":"01 Nov 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"79,210","Price":"0.00","Year":"1926","Month":"12","Date":"01 Dec 1926"},{"Title":"Black Mask","Type":"Pulp","Circulation":"71,431","Price":"0.00","Year":"1927","Month":"7","Date":"01 Jul 1927"},{"Title":"Black Mask","Type":"Pulp","Circulation":"77,846","Price":"0.00","Year":"1927","Month":"8","Date":"01 Aug 1927"},{"Title":"Black Mask","Type":"Pulp","Circulation":"91,912","Price":"0.00","Year":"1927","Month":"9","Date":"01 Sep 1927"},{"Title":"Black Mask","Type":"Pulp","Circulation":"84,160","Price":"0.00","Year":"1927","Month":"10","Date":"01 Oct 1927"},{"Title":"Black Mask","Type":"Pulp","Circulation":"80,236","Price":"0.00","Year":"1927","Month":"11","Date":"01 Nov 1927"},{"Title":"Black Mask","Type":"Pulp","Circulation":"95,269","Price":"0.00","Year":"1927","Month":"12","Date":"01 Dec 1927"},{"Title":"Black Mask","Type":"Pulp","Circulation":"106,417","Price":"0.00","Year":"1928","Month":"1","Date":"01 Jan 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"94,279","Price":"0.00","Year":"1928","Month":"2","Date":"01 Feb 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"85,904","Price":"0.00","Year":"1928","Month":"3","Date":"01 Mar 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"90,901","Price":"0.00","Year":"1928","Month":"4","Date":"01 Apr 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"89,132","Price":"0.00","Year":"1928","Month":"5","Date":"01 May 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"90,333","Price":"0.00","Year":"1928","Month":"6","Date":"01 Jun 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"83,755","Price":"0.00","Year":"1928","Month":"7","Date":"01 Jul 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"93,542","Price":"0.00","Year":"1928","Month":"8","Date":"01 Aug 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"106,097","Price":"0.00","Year":"1928","Month":"9","Date":"01 Sep 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"95,498","Price":"0.00","Year":"1928","Month":"10","Date":"01 Oct 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"97,750","Price":"0.00","Year":"1928","Month":"11","Date":"01 Nov 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"95,834","Price":"0.00","Year":"1928","Month":"12","Date":"01 Dec 1928"},{"Title":"Black Mask","Type":"Pulp","Circulation":"104,848","Price":"0.00","Year":"1929","Month":"1","Date":"01 Jan 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"112,015","Price":"0.00","Year":"1929","Month":"2","Date":"01 Feb 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"94,693","Price":"0.00","Year":"1929","Month":"3","Date":"01 Mar 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"105,885","Price":"0.00","Year":"1929","Month":"4","Date":"01 Apr 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"95,503","Price":"0.00","Year":"1929","Month":"5","Date":"01 May 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"102,430","Price":"0.00","Year":"1929","Month":"6","Date":"01 Jun 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"100,088","Price":"0.00","Year":"1929","Month":"7","Date":"01 Jul 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"93,606","Price":"0.00","Year":"1929","Month":"8","Date":"01 Aug 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"123,733","Price":"0.00","Year":"1929","Month":"9","Date":"01 Sep 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"119,431","Price":"0.00","Year":"1929","Month":"10","Date":"01 Oct 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"123,461","Price":"0.00","Year":"1929","Month":"11","Date":"01 Nov 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"124,463","Price":"0.00","Year":"1929","Month":"12","Date":"01 Dec 1929"},{"Title":"Black Mask","Type":"Pulp","Circulation":"116,647","Price":"0.00","Year":"1930","Month":"1","Date":"01 Jan 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"110,681","Price":"0.00","Year":"1930","Month":"2","Date":"01 Feb 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"105,039","Price":"0.00","Year":"1930","Month":"3","Date":"01 Mar 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"102,204","Price":"0.00","Year":"1930","Month":"4","Date":"01 Apr 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"86,519","Price":"0.00","Year":"1930","Month":"5","Date":"01 May 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"96,505","Price":"0.00","Year":"1930","Month":"6","Date":"01 Jun 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"89,876","Price":"0.00","Year":"1930","Month":"7","Date":"01 Jul 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"98,607","Price":"0.00","Year":"1930","Month":"8","Date":"01 Aug 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"92,744","Price":"0.00","Year":"1930","Month":"9","Date":"01 Sep 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"86,509","Price":"0.00","Year":"1930","Month":"10","Date":"01 Oct 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"85,503","Price":"0.00","Year":"1930","Month":"11","Date":"01 Nov 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"87,477","Price":"0.00","Year":"1930","Month":"12","Date":"01 Dec 1930"},{"Title":"Black Mask","Type":"Pulp","Circulation":"77,533","Price":"0.00","Year":"1931","Month":"1","Date":"01 Jan 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"76,192","Price":"0.00","Year":"1931","Month":"2","Date":"01 Feb 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"72,054","Price":"0.00","Year":"1931","Month":"3","Date":"01 Mar 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"72,525","Price":"0.00","Year":"1931","Month":"4","Date":"01 Apr 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"68,923","Price":"0.00","Year":"1931","Month":"5","Date":"01 May 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"68,421","Price":"0.00","Year":"1931","Month":"6","Date":"01 Jun 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"64,036","Price":"0.00","Year":"1931","Month":"7","Date":"01 Jul 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"72,853","Price":"0.00","Year":"1931","Month":"8","Date":"01 Aug 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"80,039","Price":"0.00","Year":"1931","Month":"9","Date":"01 Sep 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"73,898","Price":"0.00","Year":"1931","Month":"10","Date":"01 Oct 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"69,737","Price":"0.00","Year":"1931","Month":"11","Date":"01 Nov 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"74,434","Price":"0.00","Year":"1931","Month":"12","Date":"01 Dec 1931"},{"Title":"Black Mask","Type":"Pulp","Circulation":"73,297","Price":"0.00","Year":"1932","Month":"1","Date":"01 Jan 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"67,407","Price":"0.00","Year":"1932","Month":"2","Date":"01 Feb 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"63,449","Price":"0.00","Year":"1932","Month":"3","Date":"01 Mar 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"62,979","Price":"0.00","Year":"1932","Month":"4","Date":"01 Apr 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,991","Price":"0.00","Year":"1932","Month":"5","Date":"01 May 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,416","Price":"0.00","Year":"1932","Month":"6","Date":"01 Jun 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,463","Price":"0.00","Year":"1932","Month":"7","Date":"01 Jul 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"54,594","Price":"0.00","Year":"1932","Month":"8","Date":"01 Aug 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"58,215","Price":"0.00","Year":"1932","Month":"9","Date":"01 Sep 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"58,707","Price":"0.00","Year":"1932","Month":"10","Date":"01 Oct 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"53,709","Price":"0.00","Year":"1932","Month":"11","Date":"01 Nov 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"54,712","Price":"0.00","Year":"1932","Month":"12","Date":"01 Dec 1932"},{"Title":"Black Mask","Type":"Pulp","Circulation":"59,534","Price":"0.00","Year":"1933","Month":"1","Date":"01 Jan 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"51,581","Price":"0.00","Year":"1933","Month":"2","Date":"01 Feb 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"46,139","Price":"0.00","Year":"1933","Month":"3","Date":"01 Mar 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,842","Price":"0.00","Year":"1933","Month":"4","Date":"01 Apr 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"43,023","Price":"0.00","Year":"1933","Month":"5","Date":"01 May 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"38,943","Price":"0.00","Year":"1933","Month":"6","Date":"01 Jun 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,882","Price":"0.00","Year":"1933","Month":"7","Date":"01 Jul 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,043","Price":"0.00","Year":"1933","Month":"8","Date":"01 Aug 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"59,238","Price":"0.00","Year":"1933","Month":"9","Date":"01 Sep 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"53,471","Price":"0.00","Year":"1933","Month":"10","Date":"01 Oct 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"60,139","Price":"0.00","Year":"1933","Month":"11","Date":"01 Nov 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"54,041","Price":"0.00","Year":"1933","Month":"12","Date":"01 Dec 1933"},{"Title":"Black Mask","Type":"Pulp","Circulation":"53,562","Price":"0.00","Year":"1934","Month":"1","Date":"01 Jan 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,678","Price":"0.00","Year":"1934","Month":"2","Date":"01 Feb 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,615","Price":"0.00","Year":"1934","Month":"3","Date":"01 Mar 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"48,420","Price":"0.00","Year":"1934","Month":"4","Date":"01 Apr 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"42,462","Price":"0.00","Year":"1934","Month":"5","Date":"01 May 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"42,200","Price":"0.00","Year":"1934","Month":"6","Date":"01 Jun 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"46,160","Price":"0.00","Year":"1934","Month":"7","Date":"01 Jul 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"53,165","Price":"0.00","Year":"1934","Month":"8","Date":"01 Aug 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"70,298","Price":"0.00","Year":"1934","Month":"9","Date":"01 Sep 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"69,030","Price":"0.00","Year":"1934","Month":"10","Date":"01 Oct 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"70,611","Price":"0.00","Year":"1934","Month":"11","Date":"01 Nov 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"66,703","Price":"0.00","Year":"1934","Month":"12","Date":"01 Dec 1934"},{"Title":"Black Mask","Type":"Pulp","Circulation":"69,554","Price":"0.00","Year":"1935","Month":"1","Date":"01 Jan 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"66,752","Price":"0.00","Year":"1935","Month":"2","Date":"01 Feb 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"62,311","Price":"0.00","Year":"1935","Month":"3","Date":"01 Mar 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"59,468","Price":"0.00","Year":"1935","Month":"4","Date":"01 Apr 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"64,134","Price":"0.00","Year":"1935","Month":"5","Date":"01 May 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"59,269","Price":"0.00","Year":"1935","Month":"6","Date":"01 Jun 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"56,418","Price":"0.00","Year":"1935","Month":"7","Date":"01 Jul 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"58,278","Price":"0.00","Year":"1935","Month":"8","Date":"01 Aug 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"69,391","Price":"0.00","Year":"1935","Month":"9","Date":"01 Sep 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"68,968","Price":"0.00","Year":"1935","Month":"10","Date":"01 Oct 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"69,181","Price":"0.00","Year":"1935","Month":"11","Date":"01 Nov 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"70,246","Price":"0.00","Year":"1935","Month":"12","Date":"01 Dec 1935"},{"Title":"Black Mask","Type":"Pulp","Circulation":"72,258","Price":"0.00","Year":"1936","Month":"1","Date":"01 Jan 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"67,759","Price":"0.00","Year":"1936","Month":"2","Date":"01 Feb 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"64,802","Price":"0.00","Year":"1936","Month":"3","Date":"01 Mar 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"63,101","Price":"0.00","Year":"1936","Month":"4","Date":"01 Apr 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"60,363","Price":"0.00","Year":"1936","Month":"5","Date":"01 May 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"56,284","Price":"0.00","Year":"1936","Month":"6","Date":"01 Jun 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"60,791","Price":"0.00","Year":"1936","Month":"7","Date":"01 Jul 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"62,718","Price":"0.00","Year":"1936","Month":"8","Date":"01 Aug 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"66,193","Price":"0.00","Year":"1936","Month":"9","Date":"01 Sep 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"67,538","Price":"0.00","Year":"1936","Month":"10","Date":"01 Oct 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"64,410","Price":"0.00","Year":"1936","Month":"11","Date":"01 Nov 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"65,424","Price":"0.00","Year":"1936","Month":"12","Date":"01 Dec 1936"},{"Title":"Black Mask","Type":"Pulp","Circulation":"71,914","Price":"0.00","Year":"1937","Month":"1","Date":"01 Jan 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"66,373","Price":"0.00","Year":"1937","Month":"2","Date":"01 Feb 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"64,527","Price":"0.00","Year":"1937","Month":"3","Date":"01 Mar 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"64,197","Price":"0.00","Year":"1937","Month":"4","Date":"01 Apr 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,072","Price":"0.00","Year":"1937","Month":"5","Date":"01 May 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,341","Price":"0.00","Year":"1937","Month":"6","Date":"01 Jun 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,408","Price":"0.00","Year":"1937","Month":"7","Date":"01 Jul 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"56,806","Price":"0.00","Year":"1937","Month":"8","Date":"01 Aug 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"60,036","Price":"0.00","Year":"1937","Month":"9","Date":"01 Sep 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,384","Price":"0.00","Year":"1937","Month":"10","Date":"01 Oct 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,677","Price":"0.00","Year":"1937","Month":"11","Date":"01 Nov 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"55,259","Price":"0.00","Year":"1937","Month":"12","Date":"01 Dec 1937"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,344","Price":"0.00","Year":"1938","Month":"1","Date":"01 Jan 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,316","Price":"0.00","Year":"1938","Month":"2","Date":"01 Feb 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"55,891","Price":"0.00","Year":"1938","Month":"3","Date":"01 Mar 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"57,528","Price":"0.00","Year":"1938","Month":"4","Date":"01 Apr 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"50,928","Price":"0.00","Year":"1938","Month":"5","Date":"01 May 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"48,916","Price":"0.00","Year":"1938","Month":"6","Date":"01 Jun 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"61,111","Price":"0.00","Year":"1938","Month":"8","Date":"01 Aug 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"50,667","Price":"0.00","Year":"1938","Month":"9","Date":"01 Sep 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"48,831","Price":"0.00","Year":"1938","Month":"10","Date":"01 Oct 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"48,058","Price":"0.00","Year":"1938","Month":"11","Date":"01 Nov 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"55,965","Price":"0.00","Year":"1938","Month":"12","Date":"01 Dec 1938"},{"Title":"Black Mask","Type":"Pulp","Circulation":"48,906","Price":"0.00","Year":"1939","Month":"1","Date":"01 Jan 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"53,690","Price":"0.00","Year":"1939","Month":"2","Date":"01 Feb 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"46,427","Price":"0.00","Year":"1939","Month":"3","Date":"01 Mar 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"44,953","Price":"0.00","Year":"1939","Month":"4","Date":"01 Apr 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"44,930","Price":"0.00","Year":"1939","Month":"5","Date":"01 May 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"40,862","Price":"0.00","Year":"1939","Month":"6","Date":"01 Jun 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"45,211","Price":"0.00","Year":"1939","Month":"7","Date":"01 Jul 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"30,925","Price":"0.00","Year":"1939","Month":"8","Date":"01 Aug 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"52,179","Price":"0.00","Year":"1939","Month":"9","Date":"01 Sep 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"45,319","Price":"0.00","Year":"1939","Month":"10","Date":"01 Oct 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,870","Price":"0.00","Year":"1939","Month":"11","Date":"01 Nov 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"47,370","Price":"0.00","Year":"1939","Month":"12","Date":"01 Dec 1939"},{"Title":"Black Mask","Type":"Pulp","Circulation":"39,249","Price":"0.00","Year":"1940","Month":"1","Date":"01 Jan 1940"},{"Title":"Black Mask","Type":"Pulp","Circulation":"45,032","Price":"0.00","Year":"1940","Month":"2","Date":"01 Feb 1940"},{"Title":"Black Mask","Type":"Pulp","Circulation":"36,453","Price":"0.00","Year":"1940","Month":"3","Date":"01 Mar 1940"},{"Title":"Black Mask","Type":"Pulp","Circulation":"45,050","Price":"0.00","Year":"1940","Month":"4","Date":"01 Apr 1940"}]
 
-d3.csv("data/blma_time_series.csv", function(data) {
-	console.log(data)
-})
+var svg = d3.select("svg");
+
+var svgHeight = +svg.attr("height");
+var svgWidth = +svg.attr("width");
+
+var gMargins = {
+  top:40,
+  right:0,
+  bottom:20,
+  left:40
+}
+
+var g = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .attr("height", svgHeight - gMargins.top - gMargins.bottom)
+  .attr("width", svgWidth - gMargins.right - gMargins.left);
+
+var height = +g.attr("height");
+var width = +g.attr("width");
+
+var lineRef = g.append("rect")
+  .attr("y", 0)
+  .attr("height", height)
+  .attr("width", 1)
+  .attr("fill-opacity", 0.5);
+
+
+/**
+Overlay for interactive bar
+*/
+function dist(n1, n2) { //only compare x values
+  return n1.x-n2.x;
+}
+
+function closestData(data, mouse) {
+  var mouse = {"x":mouse[0], "y":mouse[1]};
+  var maxi = data.length;
+  var mini = 0;
+  var smallestDist = Infinity;
+  var p;
+  //perform binary search
+  while (maxi > mini) {
+    var midi = Math.floor((maxi+mini)/2);
+    p = data[midi];
+    p.x = xScale(p.Date);
+    // console.log(p)
+    var distance = dist(p, mouse);
+    // console.log(distance)
+    if (distance == 0) {
+      return data[midi];
+    }
+    if (distance > 0) {// if the distance is positive, go left
+      maxi = midi;
+    } else {
+      mini = midi + 1;
+    }
+  }
+  return p;
+
+}
+
+
+
+function mouseMove() {
+  var mouse = d3.mouse(this);
+  lineRef.attr("x", mouse[0]); //set the location of the reference bar
+
+  var closestDataPerLine = [];
+
+
+  for (var i = 0; i < paths.length; i++) {
+    var cData = closestData(paths[i].data(), mouse);
+    closestDataPerLine.push(cData);
+  }
+
+  var dots = gDots.selectAll("circle")
+    .data(closestDataPerLine);
+
+  dots.enter() //append new dots
+    .append("circle")
+    .attr("r", 5)
+  .merge(dots) //merge update and enter selections
+    .attr("cx", function(d){return xScale(d.Date)})
+    .attr("cy", function(d){return yScale(d.Circulation)});
+
+  dots.exit().remove();
+
+  var tooltips = tooltipContainer.selectAll("div")
+    .data(closestDataPerLine);
+  //have enter, use merge?
+
+  tooltips.enter()
+    .append("div")
+    .attr("y", 0)
+    .attr("height", height)
+    .attr("width", 1)
+    .attr("fill-opacity", 0.5)
+  .merge(tooltips)
+    .style("left", function(d){return xScale(d.Date)+"px"})
+    .style("top", function(d){return yScale(d.Circulation)+"px"})
+    .html(function(d){
+      return "Circulation: " + (d.Circulation);
+    });
+
+    tooltips.exit().remove();
+
+}
+
+
+var gCharts = svg.append("g");
+var datas = [];
+var paths = []; //for direct access to data points
+
+//Generates the path
+var lineFn = d3.line()
+        .x(function(d){
+          return xScale(d.Date)})
+        .y(function(d){
+          return yScale(d.Circulation)});
+
+//Clean the data
+var parseTime = d3.timeParse("%d %b %Y");
+
+var tooltipContainer = d3.select("#tooltip-container");
+
+
+
+var xScale = d3.scaleTime(); 
+
+var yScale = d3.scaleLinear();
+
+var xAxis;
+
+var yAxis;
+
+var gXAxis = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+", " +(height+gMargins.top)+")");
+
+var gYAxis = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")");
+
+
+var gDots = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .attr("height", height - gMargins.top - gMargins.bottom)
+  .attr("width", width - gMargins.right - gMargins.left);
+
+function loadData(abrv) {
+  var filename = "data/" +abrv+ "_time_series.csv";
+
+  d3.csv(filename, function(data) {
+      data.forEach(function(d) {
+        d.Date = parseTime(d.Date);
+        d.Circulation = +(d.Circulation.replace(",", ""));
+        d.Price = +d.Price;
+      });
+
+      xScale
+        .range([0, width])
+        .domain([d3.min(data, function(d){return d.Date;}), 
+          d3.max(data, function(d){return d.Date;})]); 
+
+      yScale
+        .range([height, 0])
+        .domain([0, d3.max(data, function(d){return d.Circulation;})]);
+
+      var xAxis = d3.axisBottom(xScale);
+
+      var yAxis = d3.axisLeft(yScale);
+
+      gXAxis.call(xAxis);
+
+      gYAxis.call(yAxis);
+
+      var charts = gCharts.selectAll(".chart")
+        .data(datas);
+
+      var newCharts = charts.enter()
+        .append(".chart");
+
+      newCharts.append("path")
+        .attr("stroke", "blue")
+        .attr("fill-opacity", 0)
+        .attr("d", function(d){return lineFn(d)})
+
+      newCharts.selectAll(".point")
+        .data(function(d){return d})
+        .enter()
+        .append("circle")
+        .attr("cx", function(d){return xScale(d.Date)})
+        .attr("cy", function(d){return yScale(d.Circulation)})
+        .attr("r", 2)
+        .attr("fill-opacity", 0)
+
+
+
+
+      // var line1 = g.append("path")
+      //   .attr("stroke", "blue")
+      //   .attr("fill-opacity", 0)
+      //   .attr("d", lineFn(data))
+
+      // var points = g.selectAll(".point");
+      // var points = points.data(data)
+      //   .enter()
+      //   .append("circle")
+      //   .attr("cx", function(d){return xScale(d.Date)})
+      //   .attr("cy", function(d){return yScale(d.Circulation)})
+      //   .attr("r", 2)
+      //   .attr("fill-opacity", 0)
+    });
+}
+loadData("BLMA");
+
+
+//when add new line to chart
+  //rescale axises/scales
+  //add to list of lines/paths
+  //create paths
+  //create circles
+
+
+//when remove need to be able to:
+  //remove that line and all things associated from the chart
+    //so keep list of abrv:g element
+  //rescale (change axises/scales)
+
+
+
+
+
+
+// data.forEach(function(d) {
+// 	d.Date = parseTime(d.Date);
+// 	d.Circulation = +(d.Circulation.replace(",", ""));
+// 	d.Price = +d.Price;
+// });
+// var xScale = d3.scaleTime()
+//   .range([0, width])
+//   .domain([d3.min(data, function(d){return d.Date;}), 
+//     d3.max(data, function(d){return d.Date;})]); 
+
+// var yScale = d3.scaleLinear()
+//   .range([height, 0])
+//   .domain([0, d3.max(data, function(d){return d.Circulation;})]);
+
+// var xAxis = d3.axisBottom(xScale);
+
+// var yAxis = d3.axisLeft(yScale);
+
+// var gXAxis = svg.append("g")
+//   .attr("transform", "translate("+gMargins.left+", " +(height+gMargins.top)+")")
+//   .call(xAxis);
+
+// var gYAxis = svg.append("g")
+//   .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")  
+//   .call(yAxis);
+
+
+// var line1 = g.append("path")
+// 	.attr("stroke", "blue")
+// 	.attr("fill-opacity", 0)
+// 	.attr("d", lineFn(data))
+
+// var points = g.selectAll(".point");
+// var points = points.data(data)
+// 	.enter()
+// 	.append("circle")
+// 	.attr("cx", function(d){return xScale(d.Date)})
+// 	.attr("cy", function(d){return yScale(d.Circulation)})
+// 	.attr("r", 2)
+//   .attr("fill-opacity", 0)
+
+
+
+// var paths = [points];
+//Overlayed rectangle
+svg.append("rect")
+  .attr("width", svgWidth)
+  .attr("height", svgHeight)
+  .attr("fill", "None")
+  .attr("pointer-events", "all")
+  .on("mousemove", mouseMove)
+  .on("mouseout", function(){lineRef.style("display", "none")})
+  .on("mouseover", function(){lineRef.style("display", "inline")})
+
+
+
+
+
+</script>
+
+
+<script>
+//add new magazines here
+var magazines = [
+  {name:"Black Mask", abrv:"BLMA"}
+];
+$(document).ready(function(){
+
+  //populate the dropdown
+  var dropDownUl = $("#dropdown-menu");
+  magazines.forEach(function(d){
+    //      <li role="presentation"><a role="menuitem" tabindex="-1" href="#">Black Mask</a></li>
+    var li = $('<li/>')
+      .appendTo(dropDownUl);
+
+    var a = $('<a/>')
+      .text(d.name)
+      .attr("id", d.abrv)
+      .addClass("dropdown-magazine")
+      .appendTo(li);
+  });
+
+  $(".dropdown-magazine").click(function(){
+    var magAbrv = $(this).attr("id");
+
+  })
+
+  
+});
+
 </script>
