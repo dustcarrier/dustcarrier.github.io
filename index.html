@@ -1,3 +1,5 @@
+<link rel="shortcut icon" href="">
+
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <style>
 .enter {
@@ -151,7 +153,10 @@ function mouseMove() {
 }
 
 
-var gCharts = svg.append("g");
+var gCharts = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .attr("height", height - gMargins.top - gMargins.bottom)
+  .attr("width", width - gMargins.right - gMargins.left);
 var datas = [];
 var paths = []; //for direct access to data points
 
@@ -189,10 +194,15 @@ var gDots = svg.append("g")
   .attr("height", height - gMargins.top - gMargins.bottom)
   .attr("width", width - gMargins.right - gMargins.left);
 
-function loadData(abrv) {
+
+d3.csv("data/NEYO_time_series.csv", function(data){
+  console.log(data);
+})
+
+function loadData(abrv, data) {
   var filename = "data/" +abrv+ "_time_series.csv";
 
-  d3.csv(filename, function(data) {
+  //d3.csv(filename, function(data) {
       data.forEach(function(d) {
         d.Date = parseTime(d.Date);
         d.Circulation = +(d.Circulation.replace(",", ""));
@@ -222,13 +232,30 @@ function loadData(abrv) {
       var newCharts = charts.enter()
         .append(".chart");
 
-      newCharts.append("path")
+      // newCharts.append("path")
+      //   .attr("stroke", "blue")
+      //   .attr("fill-opacity", 0)
+      //   .attr("d", function(d){return lineFn(d)})
+
+      // newCharts.selectAll(".point")
+      //   .data(function(d){return d})
+      //   .enter()
+      //   .append("circle")
+      //   .attr("cx", function(d){return xScale(d.Date)})
+      //   .attr("cy", function(d){return yScale(d.Circulation)})
+      //   .attr("r", 2)
+      //   .attr("fill-opacity", 0)
+
+
+
+
+      var line1 = gCharts.append("path")
         .attr("stroke", "blue")
         .attr("fill-opacity", 0)
-        .attr("d", function(d){return lineFn(d)})
+        .attr("d", lineFn(data))
 
-      newCharts.selectAll(".point")
-        .data(function(d){return d})
+      var points = gCharts.selectAll(".point");
+      var points = points.data(data)
         .enter()
         .append("circle")
         .attr("cx", function(d){return xScale(d.Date)})
@@ -236,25 +263,10 @@ function loadData(abrv) {
         .attr("r", 2)
         .attr("fill-opacity", 0)
 
-
-
-
-      // var line1 = g.append("path")
-      //   .attr("stroke", "blue")
-      //   .attr("fill-opacity", 0)
-      //   .attr("d", lineFn(data))
-
-      // var points = g.selectAll(".point");
-      // var points = points.data(data)
-      //   .enter()
-      //   .append("circle")
-      //   .attr("cx", function(d){return xScale(d.Date)})
-      //   .attr("cy", function(d){return yScale(d.Circulation)})
-      //   .attr("r", 2)
-      //   .attr("fill-opacity", 0)
-    });
+      paths.push(points);
+    //});
 }
-loadData("BLMA");
+loadData("BLMA", data);
 
 
 //when add new line to chart
