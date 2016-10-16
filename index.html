@@ -335,7 +335,7 @@ var gDots = svg.append("g")
 function loadData(abrv, data) {
   var filename = "data/" +abrv+ "_time_series.csv";
 
-  // d3.csv(filename, function(data) {
+  d3.csv(filename, function(data) {
       data.forEach(function(d) {
         d.Date = parseTime(d.Date);
         d.Circulation = +(d.Circulation.replace(",", ""));
@@ -379,7 +379,7 @@ function loadData(abrv, data) {
 
       drawLine();
       
-    // });
+    });
 }
 
 function drawLine() {
