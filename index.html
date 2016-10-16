@@ -148,9 +148,7 @@ function closestData(data, mouse) {
     var midi = Math.floor((maxi+mini)/2);
     p = data[midi];
     p.x = xScale(p.Date);
-    // console.log(p)
     var distance = dist(p, mouse);
-    // console.log(distance)
     if (distance == 0) {
       return data[midi];
     }
@@ -178,7 +176,7 @@ var activePanels = {
     var panels = activePanels.dataPanels;
     function findAbrvAfter() {
       for (var i = 0; i < panels.length; i++) {
-        if (panels[i] == panel) {
+        if (panels[i].attr("id") == panel.attr("id")) {
           for (var j = i + 1; j < panels.length; j++) {
             var magabrv = panels[j].attr("magabrv");
             if (magabrv) {
@@ -186,8 +184,8 @@ var activePanels = {
             }
           }
         }
-        return null;
       }
+      return null;
     }
     var abrvs = activePanels.abrvs;
     var abrvAfter = findAbrvAfter();
@@ -343,7 +341,6 @@ function loadData(abrv, data) {
       });
 
       // activePanels.abrvs.push(abrv);
-      activePanels.addAbrvs(abrv);
       activePanels.datas[abrv] = data;
 
       var abrvs = activePanels.abrvs;
@@ -384,6 +381,7 @@ function drawLine() {
     .data([])
     .exit()
     .transition()
+    // .duration(200)
     .attr("opacity", 0)
     .remove();
 
@@ -493,6 +491,7 @@ $(document).ready(function(){
     var panel = $(this).parent();
     panel.attr('magabrv', magAbrv);
     panel.addClass("active-panel");
+    activePanels.addAbrvs(magAbrv, panel);
     loadData(magAbrv, dataD[magAbrv]);
     $(this).remove();
   })
