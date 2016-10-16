@@ -173,7 +173,36 @@ var activePanels = {
   //dict of abrvs to datas
   abrvs:[],
   paths:{},
-  datas:{}
+  datas:{},
+  addAbrvs:function(abrv, panel){
+    var panels = activePanels.dataPanels;
+    function findAbrvAfter() {
+      for (var i = 0; i < panels.length; i++) {
+        if (panels[i] == panel) {
+          for (var j = i + 1; j < panels.length; j++) {
+            var magabrv = panels[j].attr("magabrv");
+            if (magabrv) {
+              return magabrv;
+            }
+          }
+        }
+        return null;
+      }
+    }
+    var abrvs = activePanels.abrvs;
+    var abrvAfter = findAbrvAfter();
+    if (abrvAfter == null) {
+      abrvs.push(abrv);
+    } else {
+      for (var i = 0; i < abrvs.length; i++) {
+        if (abrvs[i] == abrvAfter) {
+          abrvs.splice(i, 0, abrv);
+          return;
+        }
+      }
+    }
+  },
+  dataPanels:[$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4")]
 }
 
 var formatTime = d3.timeFormat("%b %e, %Y");
@@ -306,14 +335,15 @@ var gDots = svg.append("g")
 function loadData(abrv, data) {
   var filename = "data/" +abrv+ "_time_series.csv";
 
-  d3.csv(filename, function(data) {
+  // d3.csv(filename, function(data) {
       data.forEach(function(d) {
         d.Date = parseTime(d.Date);
         d.Circulation = +(d.Circulation.replace(",", ""));
         d.Price = +d.Price;
       });
 
-      activePanels.abrvs.push(abrv);
+      // activePanels.abrvs.push(abrv);
+      activePanels.addAbrvs(abrv);
       activePanels.datas[abrv] = data;
 
       var abrvs = activePanels.abrvs;
@@ -349,7 +379,7 @@ function loadData(abrv, data) {
 
       drawLine();
       
-    });
+    // });
 }
 
 function drawLine() {
@@ -471,17 +501,12 @@ $(document).ready(function(){
   })
   $(document).on("click", ".glyphicon-remove-circle", function(){
     var parent = $(this).parent();
-    console.log("yee")
     var abrv = parent.attr("magabrv");
     var abrvs = activePanels.abrvs;
     var index = abrvs.indexOf(abrv);
-    console.log(index);
-    console.log(abrv)
-    console.log(abrvs)
     if (index > -1) {
       abrvs.splice(index, 1);
     }
-    console.log(abrvs)
     parent.removeAttr('magabrv');
     parent.removeClass("active-panel");
 
