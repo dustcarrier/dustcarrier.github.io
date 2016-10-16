@@ -37,41 +37,55 @@
   padding-top: 1.5vw;
   padding-bottom: 2.0vw;
   height: 15vh;
+  font-size: 1.2vw;
+}
+.panel-remove{
+  position: absolute;
+  font-size: 1.2vw;
+  color:#444444;
+  opacity: 0.8;
+  top: 3;
+  right: 3;
 }
 </style>
 
 
 <body>
-  <div id="tooltip-container"></div>
+  <div id="tooltip-container">
+  </div>
   <div class="container">
-    <div class="dropdown">
+    <!-- <div class="dropdown">
       <button class="btn btn-primary dropdown-toggle" id="menu1" type="button" data-toggle="dropdown">Magazines
       <span class="caret"></span></button>
       <ul class="dropdown-menu" id="dropdown-menu" role="menu" aria-labelledby="menu1">
       </ul>
-    </div>
+    </div> -->
 
     <h1 class="display-4" style="text-align:center;">Example of Dynamic Time Series</h1>
-    <svg class="main-chart" width="1080" height="720"></svg>
+    <div class="row">
+      <div class="col-md-12" style="text-align:center;">
+        <svg class="main-chart" width="1080" height="720"></svg>
+      </div>
+    </div>
 
-    <div class="row" id="data-info" width="1080" height="420">
+    <div class="row" id="data-info">
         <div class="col-sm-3">
-          <div class="col-sm-12 data-panel">
+          <div class="col-sm-12 data-panel" id="data-panel1">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
         <div class="col-sm-3">
-          <div class="col-sm-12 data-panel">
+          <div class="col-sm-12 data-panel" id="data-panel2">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
         <div class="col-sm-3">
-          <div class="col-sm-12 data-panel">
+          <div class="col-sm-12 data-panel" id="data-panel3">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
         <div class="col-sm-3">
-          <div class="col-sm-12 data-panel">
+          <div class="col-sm-12 data-panel" id="data-panel4">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
@@ -98,7 +112,7 @@ var gMargins = {
   top:10,
   right:0,
   bottom:20,
-  left:40
+  left:50
 }
 
 var g = svg.append("g")
@@ -150,6 +164,17 @@ function closestData(data, mouse) {
 
 }
 
+//need to keep track of paths/circles
+//redraw lines after remove
+//so keep track of datas
+var activePanels = {
+  //list of abrvs for ordering
+  //dict of abrvs to paths
+  //dict of abrvs to datas
+  abrvs:[],
+  paths:{},
+  datas:{}
+}
 
 var formatTime = d3.timeFormat("%b %e, %Y");
 function mouseMove() {
@@ -158,11 +183,19 @@ function mouseMove() {
 
   var closestDataPerLine = [];
 
-
-  for (var i = 0; i < paths.length; i++) {
-    var cData = closestData(paths[i].data(), mouse);
+  var abrvs = activePanels.abrvs;
+  var paths = activePanels.paths;
+  for (var i = 0; i < abrvs.length; i++) {
+    var abrv = abrvs[i];
+    var cData = closestData(paths[abrv].data(), mouse);
     closestDataPerLine.push(cData);
   }
+
+  // for (var i = 0; i < paths.length; i++) {
+  //   var cData = closestData(paths[i].data(), mouse);
+  //   closestDataPerLine.push(cData);
+  // }
+
 
   var dots = gDots.selectAll("circle")
     .data(closestDataPerLine);
@@ -178,7 +211,7 @@ function mouseMove() {
 
   dots.exit().remove();
 
-  var tooltips = tooltipContainer.selectAll(".data-panel")
+  var tooltips = tooltipContainer.selectAll(".active-panel")
     .data(closestDataPerLine);
 
     /**
@@ -193,10 +226,16 @@ function mouseMove() {
     .style("background-color", function(d){
       return d3.color(pathType(d.Title)).brighter()
     })
+    // .style("border", "1px")
+    // .style("border-style", "solid")
+    // .style("border-color", function(d){
+    //   return d3.color(pathType(d.Title))
+    // })
     //.style("left", function(d){return xScale(d.Date)+"px"})
     //.style("top", function(d){return yScale(d.Circulation)+"px"})
     .html(function(d){
-      return "<b>"+d.Title+"</b>"+
+      return '<span class="glyphicon glyphicon-remove-circle panel-remove" aria-hidden="true"></span>'+
+      "<b>"+d.Title+"</b>"+
       "<br>Circulation: " + (d.Circulation)+
       "<br>Date: " + formatTime(d.Date);
     });
@@ -210,7 +249,9 @@ var gCharts = svg.append("g")
   .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
   .attr("height", height - gMargins.top - gMargins.bottom)
   .attr("width", width - gMargins.right - gMargins.left);
-var datas = [];
+
+var dataPanels = [$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4")];
+var datas = {};
 var paths = []; //for direct access to data points
 
 //Generates the path
@@ -227,21 +268,27 @@ var parseTime = d3.timeParse("%d %b %Y");
 
 var tooltipContainer = d3.select("#data-info");
 
-var xScale = d3.scaleTime(); 
+var xScale = d3.scaleTime()
+  .domain([new Date(1923, 10, 23), new Date(1942, 9, 29)])
+  .range([0, width]); 
 
-var yScale = d3.scaleLinear();
+var yScale = d3.scaleLinear()
+  .domain([0,1])
+  .range([height, 0]);
 
 var pathType = d3.scaleOrdinal(d3.schemeCategory10);
 
-var xAxis;
+var xAxis = d3.axisBottom(xScale);
 
-var yAxis;
+var yAxis = d3.axisLeft(yScale);
 
 var gXAxis = svg.append("g")
-  .attr("transform", "translate("+gMargins.left+", " +(height+gMargins.top)+")");
+  .attr("transform", "translate("+gMargins.left+", " +(height+gMargins.top)+")")
+  .call(xAxis);
 
 var gYAxis = svg.append("g")
-  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")");
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .call(yAxis);
 
 // svg.append("text")
 //   .attr("x", (width/2))
@@ -266,10 +313,25 @@ function loadData(abrv, data) {
         d.Price = +d.Price;
       });
 
+      activePanels.abrvs.push(abrv);
+      activePanels.datas[abrv] = data;
+
+      var abrvs = activePanels.abrvs;
+      var datas = activePanels.datas;
+      //for each dataset, check all dates, return min and max
+      var allData = [];
+      for (var i = 0; i < abrvs.length; i++) {
+        allData = allData.concat(datas[abrvs]);
+      }
+      // console.log(allData)
+      // allData = d3.merge(allData);
+      // console.log(allData)
+
       xScale
         .range([0, width])
         .domain([d3.min(data, function(d){return d.Date;}), 
           d3.max(data, function(d){return d.Date;})]); 
+        //NEED TO FIX TO LOOK AT ALL DATAS
 
       yScale
         .range([height, 0])
@@ -283,36 +345,44 @@ function loadData(abrv, data) {
 
       gYAxis.transition().call(yAxis);
 
-      datas.push(data);
+      
 
-      gCharts.selectAll("path")
-        .data([])
-        .exit()
-        .remove();
-
-      paths = [];
-
-      for (var i = 0; i < datas.length; i++) {
-        
-        var line1 = gCharts.append("path")
-          .attr("opacity", 0)
-          .attr("stroke", pathType(datas[i][0].Title))
-          .attr("fill-opacity", 0)
-          .attr("d", lineFn(datas[i]))
-          .transition()
-          .attr("opacity", 1)
-
-        var points = gCharts.selectAll(".point")
-          .data(datas[i])
-          .enter()
-          .append("circle")
-          .attr("cx", function(d){return xScale(d.Date)})
-          .attr("cy", function(d){return yScale(d.Circulation)})
-          .attr("r", 0)
-          .attr("fill-opacity", 0)
-        paths.push(points)
-      }
+      drawLine();
+      
     });
+}
+
+function drawLine() {
+  gCharts.selectAll("path")
+    .data([])
+    .exit()
+    .transition()
+    .attr("opacity", 0)
+    .remove();
+
+  var abrvs = activePanels.abrvs;
+  var paths = activePanels.paths;
+  for (var i = 0; i < abrvs.length; i++) {
+    var abrv = abrvs[i];
+    var magData = activePanels.datas[abrv];
+    var line1 = gCharts.append("path")
+      .attr("opacity", 0)
+      .attr("stroke", pathType(magData[0].Title))
+      .attr("fill-opacity", 0)
+      .attr("d", lineFn(magData))
+      .transition()
+      .attr("opacity", 1)
+
+    var points = gCharts.selectAll(".point")
+      .data(magData)
+      .enter()
+      .append("circle")
+      .attr("cx", function(d){return xScale(d.Date)})
+      .attr("cy", function(d){return yScale(d.Circulation)})
+      .attr("r", 0)
+      .attr("fill-opacity", 0)
+    paths[abrv] = points;
+  }
 }
 // loadData("BLMA", data);
 // loadData("NEYO", neyoData);
@@ -354,6 +424,19 @@ var magazines = [
   {name:"New Yorker", abrv:"NEYO"}
 ];
 var dataD = {"BLMA": data, "NEYO": neyoData};
+
+function genMagSelection() {
+  var start = '<select class="form-control mag-select">';
+  start+='<option value="" hidden>Select a magazine</option>';
+  for (var i = 0; i < magazines.length; i++) {
+    var magName = magazines[i].name;
+    var magAbrv = magazines[i].abrv;
+    start+="<option value="+magAbrv+">"+magName+"</option>";
+  }
+  var end = '</select>';
+  return start+end;
+}
+
 $(document).ready(function(){
 
   //populate the dropdown according to the js object
@@ -375,7 +458,42 @@ $(document).ready(function(){
     // loadData(magAbrv);
     loadData(magAbrv, dataD[magAbrv])
   })
-  loadData("BLMA", dataD["BLMA"]);
+  $(document).on("click", ".glyphicon-plus", function(){
+    $(this).parent().html(genMagSelection());
+  });
+  $(document).on("change", ".mag-select", function(){
+    var magAbrv = $(this).children(":selected").val();
+    var panel = $(this).parent();
+    panel.attr('magabrv', magAbrv);
+    panel.addClass("active-panel");
+    loadData(magAbrv, dataD[magAbrv]);
+    // $(this).remove();
+  })
+  $(document).on("click", ".glyphicon-remove-circle", function(){
+    var parent = $(this).parent();
+    console.log("yee")
+    var abrv = parent.attr("magabrv");
+    var abrvs = activePanels.abrvs;
+    var index = abrvs.indexOf(abrv);
+    if (index > -1) {
+      abrvs.splice(index, 1);
+    }
+    parent.removeAttr('magabrv');
+    parent.removeClass("active-panel");
+
+    drawLine(); //update the chart
+
+    parent.css("background-color", "#999999")
+    $(this).remove()
+    var plusSign = $('<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>');
+    parent.html("");
+    parent.append(plusSign);
+    plusSign.css("transform", "perspective(1px) translateY(-50%)")
+
+  });
+
+
+  // loadData("BLMA", dataD["BLMA"]);
 
   
 });
