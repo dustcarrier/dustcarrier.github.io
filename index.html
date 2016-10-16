@@ -475,9 +475,13 @@ $(document).ready(function(){
     var abrv = parent.attr("magabrv");
     var abrvs = activePanels.abrvs;
     var index = abrvs.indexOf(abrv);
+    console.log(index);
+    console.log(abrv)
+    console.log(abrvs)
     if (index > -1) {
       abrvs.splice(index, 1);
     }
+    console.log(abrvs)
     parent.removeAttr('magabrv');
     parent.removeClass("active-panel");
 
