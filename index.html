@@ -351,21 +351,18 @@ function loadData(abrv, data) {
       //for each dataset, check all dates, return min and max
       var allData = [];
       for (var i = 0; i < abrvs.length; i++) {
-        allData = allData.concat(datas[abrvs]);
+        allData = allData.concat(datas[abrvs[i]]);
       }
-      // console.log(allData)
-      // allData = d3.merge(allData);
-      // console.log(allData)
 
       xScale
         .range([0, width])
-        .domain([d3.min(data, function(d){return d.Date;}), 
-          d3.max(data, function(d){return d.Date;})]); 
+        .domain([d3.min(allData, function(d){return d.Date;}), 
+          d3.max(allData, function(d){return d.Date;})]); 
         //NEED TO FIX TO LOOK AT ALL DATAS
 
       yScale
         .range([height, 0])
-        .domain([0, d3.max(data, function(d){return d.Circulation;})]);
+        .domain([0, d3.max(allData, function(d){return d.Circulation;})]);
 
       var xAxis = d3.axisBottom(xScale);
 
@@ -497,7 +494,7 @@ $(document).ready(function(){
     panel.attr('magabrv', magAbrv);
     panel.addClass("active-panel");
     loadData(magAbrv, dataD[magAbrv]);
-    // $(this).remove();
+    $(this).remove();
   })
   $(document).on("click", ".glyphicon-remove-circle", function(){
     var parent = $(this).parent();
