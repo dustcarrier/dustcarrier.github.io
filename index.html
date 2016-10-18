@@ -37,7 +37,7 @@
   padding-top: 1.5vw;
   padding-bottom: 2.0vw;
   height: 15vh;
-  font-size: 1.2vw;
+  font-size: 0.8vw;
 }
 .panel-remove{
   position: absolute;
@@ -69,23 +69,33 @@
     </div>
 
     <div class="row" id="data-info">
-        <div class="col-sm-3">
+        <div class="col-sm-2">
           <div class="col-sm-12 data-panel" id="data-panel1">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
-        <div class="col-sm-3">
+        <div class="col-sm-2">
           <div class="col-sm-12 data-panel" id="data-panel2">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
-        <div class="col-sm-3">
+        <div class="col-sm-2">
           <div class="col-sm-12 data-panel" id="data-panel3">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
-        <div class="col-sm-3">
+        <div class="col-sm-2">
           <div class="col-sm-12 data-panel" id="data-panel4">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="col-sm-12 data-panel" id="data-panel5">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="col-sm-2">
+          <div class="col-sm-12 data-panel" id="data-panel6">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </div>
         </div>
@@ -139,6 +149,7 @@ function dist(n1, n2) { //only compare x values
 
 function closestData(data, mouse) {
   var mouse = {"x":mouse[0], "y":mouse[1]};
+
   var maxi = data.length;
   var mini = 0;
   var smallestDist = Infinity;
@@ -158,6 +169,23 @@ function closestData(data, mouse) {
       mini = midi + 1;
     }
   }
+
+  var nearbyPs = [];
+  for (var i = -3; i <= 3; i++) {
+    if (midi+i < 0 || midi + i >= data.length) {
+      continue;
+    }
+    var nearbyP = data[midi+i];
+    nearbyP.x = xScale(nearbyP.Date);
+    nearbyP.y = yScale(nearbyP.Circulation)
+    nearbyPs.push(nearbyP)
+    var absDistance = Math.abs(dist(nearbyP, mouse));
+    if (absDistance < smallestDist) {
+      smallestDist = absDistance;
+      p = nearbyP;
+    }
+  }
+
   return p;
 
 }
@@ -206,6 +234,7 @@ var activePanels = {
 var formatTime = d3.timeFormat("%b %e, %Y");
 function mouseMove() {
   var mouse = d3.mouse(this);
+  mouse[0]-=gMargins.left;
   lineRef.attr("x", mouse[0]); //set the location of the reference bar
 
   var closestDataPerLine = [];
@@ -213,8 +242,7 @@ function mouseMove() {
   var abrvs = activePanels.abrvs;
   var paths = activePanels.paths;
   for (var i = 0; i < abrvs.length; i++) {
-    var abrv = abrvs[i];
-    var cData = closestData(paths[abrv].data(), mouse);
+    var cData = closestData(paths[abrvs[i]].data(), mouse);
     closestDataPerLine.push(cData);
   }
 
@@ -273,11 +301,12 @@ function mouseMove() {
 
 
 var gCharts = svg.append("g")
+  .attr("id", "gcharts")
   .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
   .attr("height", height - gMargins.top - gMargins.bottom)
   .attr("width", width - gMargins.right - gMargins.left);
 
-var dataPanels = [$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4")];
+var dataPanels = [$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4"), $("#data-panel5"), $("#data-panel6")];
 var datas = {};
 var paths = []; //for direct access to data points
 
@@ -396,7 +425,7 @@ function drawLine() {
       .attr("fill-opacity", 0)
       .attr("d", lineFn(magData))
       .transition()
-      .attr("opacity", 1)
+      .attr("opacity", 1);
 
     var points = gCharts.selectAll(".point")
       .data(magData)
@@ -404,8 +433,9 @@ function drawLine() {
       .append("circle")
       .attr("cx", function(d){return xScale(d.Date)})
       .attr("cy", function(d){return yScale(d.Circulation)})
+      .attr("fill", pathType(magData[0].Title))
       .attr("r", 0)
-      .attr("fill-opacity", 0)
+      .attr("fill-opacity", 0);
     paths[abrv] = points;
   }
 }
@@ -456,6 +486,9 @@ function genMagSelection() {
   for (var i = 0; i < magazines.length; i++) {
     var magName = magazines[i].name;
     var magAbrv = magazines[i].abrv;
+    if (activePanels.abrvs.indexOf(magAbrv) != -1) {
+      continue;
+    }
     start+="<option value="+magAbrv+">"+magName+"</option>";
   }
   var end = '</select>';
