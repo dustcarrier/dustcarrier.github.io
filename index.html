@@ -372,37 +372,39 @@ function loadData(abrv, data) {
       // activePanels.abrvs.push(abrv);
       activePanels.datas[abrv] = data;
 
-      var abrvs = activePanels.abrvs;
-      var datas = activePanels.datas;
-      //for each dataset, check all dates, return min and max
-      var allData = [];
-      for (var i = 0; i < abrvs.length; i++) {
-        allData = allData.concat(datas[abrvs[i]]);
-      }
-
-      xScale
-        .range([0, width])
-        .domain([d3.min(allData, function(d){return d.Date;}), 
-          d3.max(allData, function(d){return d.Date;})]); 
-        //NEED TO FIX TO LOOK AT ALL DATAS
-
-      yScale
-        .range([height, 0])
-        .domain([0, d3.max(allData, function(d){return d.Circulation;})]);
-
-      var xAxis = d3.axisBottom(xScale);
-
-      var yAxis = d3.axisLeft(yScale);
-
-      gXAxis.transition().call(xAxis);
-
-      gYAxis.transition().call(yAxis);
-
-      
+      updateAxes();
 
       drawLine();
       
     });
+}
+
+function updateAxes() {
+  var abrvs = activePanels.abrvs;
+    var datas = activePanels.datas;
+    //for each dataset, check all dates, return min and max
+    var allData = [];
+    for (var i = 0; i < abrvs.length; i++) {
+      allData = allData.concat(datas[abrvs[i]]);
+    }
+
+    xScale
+      .range([0, width])
+      .domain([d3.min(allData, function(d){return d.Date;}), 
+        d3.max(allData, function(d){return d.Date;})]); 
+      //NEED TO FIX TO LOOK AT ALL DATAS
+
+    yScale
+      .range([height, 0])
+      .domain([0, d3.max(allData, function(d){return d.Circulation;})]);
+
+    var xAxis = d3.axisBottom(xScale);
+
+    var yAxis = d3.axisLeft(yScale);
+
+    gXAxis.transition().call(xAxis);
+
+    gYAxis.transition().call(yAxis);
 }
 
 function drawLine() {
@@ -540,6 +542,7 @@ $(document).ready(function(){
     parent.removeClass("active-panel");
 
     drawLine(); //update the chart
+    updateAxes();
 
     parent.css("background-color", "#999999")
     $(this).remove()
