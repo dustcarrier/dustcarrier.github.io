@@ -1,22 +1,9 @@
-<link rel="shortcut icon" href="">
+<link rel="shortcut icon" href=""> 
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <style>
 .main-chart {
   text-align: center;
-}
-.tooltip{
-  position: absolute;
-  line-height: 1;
-  font-weight: bold;
-  padding: 12px;
-  background: rgba(100, 0, 0, 0.8);
-  color: #ff4444;
-  border-radius: 2px;
-  text-align: center;
-  height: 50px;
-  width: 150px;
-  pointer-events:none;
 }
 .glyphicon-plus{
   font-size:4.5vw;
@@ -51,16 +38,7 @@
 
 
 <body>
-  <div id="tooltip-container">
-  </div>
   <div class="container">
-    <!-- <div class="dropdown">
-      <button class="btn btn-primary dropdown-toggle" id="menu1" type="button" data-toggle="dropdown">Magazines
-      <span class="caret"></span></button>
-      <ul class="dropdown-menu" id="dropdown-menu" role="menu" aria-labelledby="menu1">
-      </ul>
-    </div> -->
-
     <h1 class="display-4" style="text-align:center;">Example of Dynamic Time Series</h1>
     <div class="row">
       <div class="col-md-12" style="text-align:center;">
@@ -125,7 +103,7 @@ var gMargins = {
   left:50
 }
 
-var g = svg.append("g")
+var g = svg.append("g") //main graphics element
   .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
   .attr("height", svgHeight - gMargins.top - gMargins.bottom)
   .attr("width", svgWidth - gMargins.right - gMargins.left);
@@ -133,70 +111,61 @@ var g = svg.append("g")
 var height = +g.attr("height");
 var width = +g.attr("width");
 
-var lineRef = g.append("rect")
+var lineRef = g.append("rect") //reference line
   .attr("y", 0)
   .attr("height", height)
   .attr("width", 1)
   .attr("fill-opacity", 0.5);
 
+var gCharts = svg.append("g") //holds the path and invisible data points
+  .attr("id", "gcharts")
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .attr("height", height - gMargins.top - gMargins.bottom)
+  .attr("width", width - gMargins.right - gMargins.left);
 
-/**
-Overlay for interactive bar
-*/
-function dist(n1, n2) { //only compare x values
-  return n1.x-n2.x;
-}
+//Generates the path
+var lineFn = d3.line()
+        .x(function(d){
+          return xScale(d.Date)})
+        .y(function(d){
+          return yScale(d.Circulation)});
 
-function closestData(data, mouse) {
-  var mouse = {"x":mouse[0], "y":mouse[1]};
+//Clean the data
+var parseTime = d3.timeParse("%d %b %Y");
 
-  var maxi = data.length;
-  var mini = 0;
-  var smallestDist = Infinity;
-  var p;
-  //perform binary search
-  while (maxi > mini) {
-    var midi = Math.floor((maxi+mini)/2);
-    p = data[midi];
-    p.x = xScale(p.Date);
-    var distance = dist(p, mouse);
-    if (distance == 0) {
-      return data[midi];
-    }
-    if (distance > 0) {// if the distance is positive, go left
-      maxi = midi;
-    } else {
-      mini = midi + 1;
-    }
-  }
+//for the tool tip
+var formatTime = d3.timeFormat("%b %e, %Y");
 
-  var nearbyPs = [];
-  for (var i = -3; i <= 3; i++) {
-    if (midi+i < 0 || midi + i >= data.length) {
-      continue;
-    }
-    var nearbyP = data[midi+i];
-    nearbyP.x = xScale(nearbyP.Date);
-    nearbyP.y = yScale(nearbyP.Circulation)
-    nearbyPs.push(nearbyP)
-    var absDistance = Math.abs(dist(nearbyP, mouse));
-    if (absDistance < smallestDist) {
-      smallestDist = absDistance;
-      p = nearbyP;
-    }
-  }
+var pathType = d3.scaleOrdinal(d3.schemeCategory10);
 
-  return p;
+var xScale = d3.scaleTime()
+  .domain([new Date(1923, 10, 23), new Date(1942, 9, 29)])
+  .range([0, width]); 
 
-}
+var yScale = d3.scaleLinear()
+  .domain([0,1])
+  .range([height, 0]);
 
-//need to keep track of paths/circles
-//redraw lines after remove
-//so keep track of datas
-var activePanels = {
-  //list of abrvs for ordering
-  //dict of abrvs to paths
-  //dict of abrvs to datas
+var xAxis = d3.axisBottom(xScale);
+
+var yAxis = d3.axisLeft(yScale);
+
+var gXAxis = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+", " +(height+gMargins.top)+")")
+  .call(xAxis);
+
+var gYAxis = svg.append("g")
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .call(yAxis);
+
+var tooltipContainer = d3.select("#data-info");
+
+var gDots = svg.append("g") //contains the dots (follows the line)
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
+  .attr("height", height - gMargins.top - gMargins.bottom)
+  .attr("width", width - gMargins.right - gMargins.left);
+
+var activePanels = { //MAIN DATA STRUCTURE
   abrvs:[],
   paths:{},
   datas:{},
@@ -213,7 +182,7 @@ var activePanels = {
           }
         }
       }
-      return null;
+      return null; //if there are no abbreviations after it, return null
     }
     var abrvs = activePanels.abrvs;
     var abrvAfter = findAbrvAfter();
@@ -228,11 +197,54 @@ var activePanels = {
       }
     }
   },
-  dataPanels:[$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4")]
+  dataPanels:[$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4"), $("#data-panel5"), $("#data-panel6")]
 }
 
-var formatTime = d3.timeFormat("%b %e, %Y");
 function mouseMove() {
+  function closestData(data, mouse) {
+    function dist(n1, n2) { //only compare x values
+      return n1.x-n2.x;
+    }
+    var mouse = {"x":mouse[0], "y":mouse[1]};
+
+    var maxi = data.length;
+    var mini = 0;
+    var p;
+    //perform binary search
+    while (maxi > mini) {
+      var midi = Math.floor((maxi+mini)/2);
+      p = data[midi];
+      p.x = xScale(p.Date);
+      var distance = dist(p, mouse);
+      if (distance == 0) {
+        return data[midi];
+      }
+      if (distance > 0) {// if the distance is positive, go left
+        maxi = midi;
+      } else {
+        mini = midi + 1;
+      }
+    }
+
+    var smallestDist = Infinity;
+    var nearbyPs = [];
+    for (var i = -3; i <= 3; i++) { //do a search around
+      if (midi+i < 0 || midi + i >= data.length) {
+        continue;
+      }
+      var nearbyP = data[midi+i];
+      nearbyP.x = xScale(nearbyP.Date);
+      nearbyP.y = yScale(nearbyP.Circulation)
+      nearbyPs.push(nearbyP)
+      var absDistance = Math.abs(dist(nearbyP, mouse));
+      if (absDistance < smallestDist) {
+        smallestDist = absDistance;
+        p = nearbyP;
+      }
+    }
+    return p;
+  }
+
   var mouse = d3.mouse(this);
   mouse[0]-=gMargins.left;
   lineRef.attr("x", mouse[0]); //set the location of the reference bar
@@ -245,12 +257,6 @@ function mouseMove() {
     var cData = closestData(paths[abrvs[i]].data(), mouse);
     closestDataPerLine.push(cData);
   }
-
-  // for (var i = 0; i < paths.length; i++) {
-  //   var cData = closestData(paths[i].data(), mouse);
-  //   closestDataPerLine.push(cData);
-  // }
-
 
   var dots = gDots.selectAll("circle")
     .data(closestDataPerLine);
@@ -269,95 +275,17 @@ function mouseMove() {
   var tooltips = tooltipContainer.selectAll(".active-panel")
     .data(closestDataPerLine);
 
-    /**
-.enter()
-    .append("div")
-    .attr("class", "data-panel")
-  .merge(tooltips)
-    */
-    //If set amount of divs, then don't enter and append any new ones
-
   tooltips
     .style("background-color", function(d){
       return d3.color(pathType(d.Title)).brighter()
     })
-    // .style("border", "1px")
-    // .style("border-style", "solid")
-    // .style("border-color", function(d){
-    //   return d3.color(pathType(d.Title))
-    // })
-    //.style("left", function(d){return xScale(d.Date)+"px"})
-    //.style("top", function(d){return yScale(d.Circulation)+"px"})
     .html(function(d){
       return '<span class="glyphicon glyphicon-remove-circle panel-remove" aria-hidden="true"></span>'+
       "<b>"+d.Title+"</b>"+
       "<br>Circulation: " + (d.Circulation)+
       "<br>Date: " + formatTime(d.Date);
     });
-
-    // tooltips.exit().remove();
-
 }
-
-
-var gCharts = svg.append("g")
-  .attr("id", "gcharts")
-  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
-  .attr("height", height - gMargins.top - gMargins.bottom)
-  .attr("width", width - gMargins.right - gMargins.left);
-
-var dataPanels = [$("#data-panel1"), $("#data-panel2"), $("#data-panel3"), $("#data-panel4"), $("#data-panel5"), $("#data-panel6")];
-var datas = {};
-var paths = []; //for direct access to data points
-
-//Generates the path
-var lineFn = d3.line()
-        .x(function(d){
-          return xScale(d.Date)})
-        .y(function(d){
-          return yScale(d.Circulation)});
-
-//Clean the data
-var parseTime = d3.timeParse("%d %b %Y");
-
-
-
-var tooltipContainer = d3.select("#data-info");
-
-var xScale = d3.scaleTime()
-  .domain([new Date(1923, 10, 23), new Date(1942, 9, 29)])
-  .range([0, width]); 
-
-var yScale = d3.scaleLinear()
-  .domain([0,1])
-  .range([height, 0]);
-
-var pathType = d3.scaleOrdinal(d3.schemeCategory10);
-
-var xAxis = d3.axisBottom(xScale);
-
-var yAxis = d3.axisLeft(yScale);
-
-var gXAxis = svg.append("g")
-  .attr("transform", "translate("+gMargins.left+", " +(height+gMargins.top)+")")
-  .call(xAxis);
-
-var gYAxis = svg.append("g")
-  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
-  .call(yAxis);
-
-// svg.append("text")
-//   .attr("x", (width/2))
-//   .attr("y", (gMargins.top / 2))
-//   .attr("text-anchor", "middle")
-//   .style("font-size", "16px")
-//   .text("Dynamic Example of Time Series");
-
-
-var gDots = svg.append("g")
-  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
-  .attr("height", height - gMargins.top - gMargins.bottom)
-  .attr("width", width - gMargins.right - gMargins.left);
 
 function loadData(abrv, data) {
   var filename = "data/" +abrv+ "_time_series.csv";
@@ -369,11 +297,8 @@ function loadData(abrv, data) {
         d.Price = +d.Price;
       });
 
-      // activePanels.abrvs.push(abrv);
       activePanels.datas[abrv] = data;
-
       updateAxes();
-
       drawLine();
       
     });
@@ -392,18 +317,14 @@ function updateAxes() {
       .range([0, width])
       .domain([d3.min(allData, function(d){return d.Date;}), 
         d3.max(allData, function(d){return d.Date;})]); 
-      //NEED TO FIX TO LOOK AT ALL DATAS
 
     yScale
       .range([height, 0])
       .domain([0, d3.max(allData, function(d){return d.Circulation;})]);
 
     var xAxis = d3.axisBottom(xScale);
-
     var yAxis = d3.axisLeft(yScale);
-
     gXAxis.transition().call(xAxis);
-
     gYAxis.transition().call(yAxis);
 }
 
@@ -412,7 +333,7 @@ function drawLine() {
     .data([])
     .exit()
     .transition()
-    // .duration(200)
+    // .duration(100)
     .attr("opacity", 0)
     .remove();
 
@@ -441,21 +362,7 @@ function drawLine() {
     paths[abrv] = points;
   }
 }
-// loadData("BLMA", data);
-// loadData("NEYO", neyoData);
 
-
-//when add new line to chart
-  //rescale axises/scales
-  //add to list of lines/paths
-  //create paths
-  //create circles
-
-
-//when remove need to be able to:
-  //remove that line and all things associated from the chart
-    //so keep list of abrv:g element
-  //rescale (change axises/scales)
 
 //Overlayed rectangle
 svg.append("rect")
@@ -467,14 +374,14 @@ svg.append("rect")
   .on("mouseout", function(){lineRef.style("display", "none")})
   .on("mouseover", function(){lineRef.style("display", "inline")})
 
-
-
-
-
+d3.csv("circ_data_by_loc_with_statenames.csv", function(data) {
+  console.log(data);
+      
+    });
 </script>
 
 
-<script>
+<script> //begin jquery
 //add new magazines here
 var magazines = [
   {name:"Black Mask", abrv:"BLMA"},
@@ -513,15 +420,11 @@ $(document).ready(function(){
       .appendTo(li);
   });
 
-  $(".dropdown-magazine").click(function(){
-    var magAbrv = $(this).attr("id");
-    // loadData(magAbrv);
-    loadData(magAbrv, dataD[magAbrv])
-  })
-  $(document).on("click", ".glyphicon-plus", function(){
+  //should use delegations ".on('action', ...)" because I am dyamically adding elements
+  $(document).on("click", ".glyphicon-plus", function(){ //on click plus
     $(this).parent().html(genMagSelection());
   });
-  $(document).on("change", ".mag-select", function(){
+  $(document).on("change", ".mag-select", function(){ //on select magazine
     var magAbrv = $(this).children(":selected").val();
     var panel = $(this).parent();
     panel.attr('magabrv', magAbrv);
@@ -530,7 +433,7 @@ $(document).ready(function(){
     loadData(magAbrv, dataD[magAbrv]);
     $(this).remove();
   })
-  $(document).on("click", ".glyphicon-remove-circle", function(){
+  $(document).on("click", ".glyphicon-remove-circle", function(){ //on remove panel
     var parent = $(this).parent();
     var abrv = parent.attr("magabrv");
     var abrvs = activePanels.abrvs;
@@ -552,11 +455,6 @@ $(document).ready(function(){
     plusSign.css("transform", "perspective(1px) translateY(-50%)")
 
   });
-
-
-  // loadData("BLMA", dataD["BLMA"]);
-
-  
 });
 
 </script>
