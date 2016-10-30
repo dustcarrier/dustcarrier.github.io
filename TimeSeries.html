@@ -291,7 +291,7 @@ function loadData(abrv, data) {
   var filename = "data/" +abrv+ "_time_series.csv";
 
   d3.csv(filename, function(data) {
-    console.log(data);
+    console.log(JSON.stringify(data));
       // data.forEach(function(d) {
       //   d.Date = parseTime(d.Date);
       //   d.Circulation = +(d.Circulation.replace(",", ""));
