@@ -264,9 +264,9 @@ function mouseMove() {
   dots.enter() //append new dots
     .append("circle")
     .attr("r", 4)
-    .attr("fill", function(d){
-      return d3.color(pathType(d.Title)).darker()})
   .merge(dots) //merge update and enter selections
+    .attr("fill", function(d){ //putting attr here is a little slower but prevents color bug from happening
+      return d3.color(pathType(d.Title)).darker()})
     .attr("cx", function(d){return xScale(d.Date)})
     .attr("cy", function(d){return yScale(d.Circulation)});
 
@@ -293,7 +293,6 @@ function loadData(abrv, data) {
   d3.csv(filename, function(data) {
       data.forEach(function(d) {
         d.Date = parseTime(d.Date);
-        // console.log(d.Date);
         //http://stackoverflow.com/questions/10610402/javascript-replace-all-commas-in-a-string
         d.Circulation = +(d.Circulation.replace(/,/g, ""));
         d.Price = +d.Price;
@@ -372,7 +371,7 @@ function drawLine() {
 
 
 //Overlayed rectangle
-svg.append("rect")
+var overlay = svg.append("rect")
   .attr("width", svgWidth)
   .attr("height", svgHeight)
   .attr("fill", "None")
@@ -380,6 +379,46 @@ svg.append("rect")
   .on("mousemove", mouseMove)
   .on("mouseout", function(){lineRef.style("display", "none")})
   .on("mouseover", function(){lineRef.style("display", "inline")})
+
+// function zoomAxes(isZoomIn) {
+//   var oldDomain = xScale.domain();
+//   var oldXMin = oldDomain[0];
+//   var oldXMax = oldDomain[1];
+
+//   var minDate = new Date(oldXMin.getTime());
+//   var maxDate = new Date(oldXMax.getTime());
+
+//   var zoomFactor = isZoomIn ? -5 : 5; //5 years
+
+//   minDate.setFullYear(minDate.getFullYear() - zoomFactor);
+//   maxDate.setFullYear(maxDate.getFullYear() + zoomFactor);
+
+//   xScale.domain([minDate, maxDate]);
+
+//   var xAxis = d3.axisBottom(xScale);
+//   gXAxis.transition().call(xAxis);
+
+//   drawLine();
+// }
+
+function zoomAxes() {
+  var xAxis = d3.axisBottom(xScale);
+  console.log(d3.event.transform)
+  xScale = d3.event.transform.rescaleX(xScale);
+  gXAxis.call(xAxis.scale(xScale));
+  drawLine();
+}
+
+// d3.zoomTransformation(this);
+
+// var zoom = d3.zoom()
+//   // .x(xScale)
+//   .scaleExtent([1,2])
+//   .translateExtent([[(new Date()).setFullYear(1850), 0], [(new Date()).setFullYear(1970), 0]])
+//   .on("zoom", zoomAxes);
+
+// overlay.call(zoom);
+
 
 // d3.csv("circ_data_by_loc_with_statenames.csv", function(data) {
 //   console.log(data);
@@ -439,8 +478,8 @@ $(document).ready(function(){
     panel.attr('magabrv', magAbrv);
     panel.addClass("active-panel");
     activePanels.addAbrvs(magAbrv, panel);
-    // loadData(magAbrv, dataD[magAbrv]);
-    loadData(magAbrv);
+    loadData(magAbrv, dataD[magAbrv]);
+    // loadData(magAbrv);
     $(this).remove();
   })
   $(document).on("click", ".glyphicon-remove-circle", function(){ //on remove panel

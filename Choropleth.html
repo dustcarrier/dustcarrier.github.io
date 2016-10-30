@@ -249,6 +249,11 @@ function separateData(data) {
 
 var stateD = separateData(circData);
 
+//proportion to census data or raw numbers
+//raw numbers
+//relative to other states (proportion)
+//proportional to census data
+	//raw number/census number for that state
 var map = {
 	"currMagId":1,
 	"currDateId":"1931-06-30",
@@ -259,12 +264,15 @@ var map = {
 		map.mapData = stateD[map.currMagId][map.currDateId];
 	},
 	setScaleColor: function() {
-		if (map.dataType) {
+		if (map.dataType == "newsStand") {
 			map.scaleColor
 			.domain([0, map.mapData.maxSingleCopies/map.mapData.totalSingleCopies]);
-		} else {
+		} else if (map.dataType == "mailSubs") {
 			map.scaleColor
 			.domain([0, map.mapData.maxMailSubs/map.mapData.totalMailSubs]);
+		} else {
+			map.scaleColor
+			.domain([0, map.mapData.maxTotalCirc/map.mapData.maxTotalCirc]);
 		}
 	},
 	updateMap: function() {
