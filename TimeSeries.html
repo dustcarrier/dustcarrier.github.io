@@ -100,7 +100,7 @@ var gMargins = {
   top:10,
   right:0,
   bottom:20,
-  left:50
+  left:60
 }
 
 var g = svg.append("g") //main graphics element
@@ -293,7 +293,7 @@ function loadData(abrv, data) {
   d3.csv(filename, function(data) {
       data.forEach(function(d) {
         d.Date = parseTime(d.Date);
-        console.log(d.Date);
+        // console.log(d.Date);
         //http://stackoverflow.com/questions/10610402/javascript-replace-all-commas-in-a-string
         d.Circulation = +(d.Circulation.replace(/,/g, ""));
         d.Price = +d.Price;
