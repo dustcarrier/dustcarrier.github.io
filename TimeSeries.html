@@ -298,6 +298,10 @@ function loadData(abrv, data) {
         d.Price = +d.Price;
       });
 
+      data.sort(function(a,b) {
+        return a.Date > b.Date;
+      })
+
       activePanels.datas[abrv] = data;
       updateAxes();
       drawLine();
