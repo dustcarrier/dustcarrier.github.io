@@ -293,7 +293,7 @@ function mouseMove() {
 function loadData(abrv, data) {
   var filename = "data/" +abrv+ "_time_series.csv";
 
-  // d3.csv(filename, function(data) {
+  d3.csv(filename, function(data) {
       data.forEach(function(d) {
         d.Date = parseTime(d.Date);
         //http://stackoverflow.com/questions/10610402/javascript-replace-all-commas-in-a-string
@@ -310,7 +310,7 @@ function loadData(abrv, data) {
       updateAxes();
       drawLine();
       
-    // });
+    });
 }
 
 function updateAxes() {
@@ -480,8 +480,8 @@ $(document).ready(function(){
     panel.attr('magabrv', magAbrv);
     panel.addClass("active-panel");
     activePanels.addAbrvs(magAbrv, panel);
-    loadData(magAbrv, dataD[magAbrv]);
-    // loadData(magAbrv);
+    // loadData(magAbrv, dataD[magAbrv]);
+    loadData(magAbrv);
     $(this).remove();
   })
   $(document).on("click", ".glyphicon-remove-circle", function(){ //on remove panel
