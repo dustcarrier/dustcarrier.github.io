@@ -1,4 +1,5 @@
 <link rel="shortcut icon" href=""> 
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.0/themes/smoothness/jquery-ui.css">
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
@@ -25,16 +26,31 @@ path:hover {
 	color: rgba(50, 50, 50, 1);
 }
 
-
+.ui-slider, .ui-slider-handle {
+  height:400px;
+}
 </style>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <body>
-	<div id="tooltip"></div>
-	<h1 id="map-title">Black Mask Geomap</h4>
-	<div id="svg"></div>
+	
+	<h1 id="map-title"></h4>
+	<div class="container">
+		<div class="row">
+	        <div class="col-sm-1">
+	    		<div id="slider"></div>
+	    		<div id="slider-labels"></div>
+	    	</div>
+	        <div class="col-sm-11">
+	        	<div id="tooltip"></div>
+				<div id="svg"></div>
+			</div>
+		</div>
+	</div>
 </body>
 <div id="selector-container" style="text-align: center">
 	<div id="mag-selector" style="display: inline-block">
@@ -63,6 +79,11 @@ http://bl.ocks.org/Caged/6476579
 Geomap and states.json
 http://bl.ocks.org/michellechandra/0b2ce4923dc9b5809922
 */
+
+d3.csv("census_data.csv", function(data) {
+	console.log(date);
+}
+
 
 var width = 960;
 var height = 600;
@@ -147,7 +168,9 @@ function separateData(data) {
 		var totalCirc = mailSubs + singleCopies;
 
 		if (!(magId in stateD)) {
-			stateD[magId] = {};
+			stateD[magId] = {
+				'sortedDates': []
+			};
 		}
 		if (!(date in stateD[magId])) {
 			stateD[magId][date] = {
@@ -158,6 +181,7 @@ function separateData(data) {
 				"maxSingleCopies": 0,
 				"maxTotalCirc": 0
 			};
+			stateD[magId].sortedDates.push(date);
 		}
 		if (!(state in stateD[magId][date])) {
 			stateD[magId][date][state] = {};
@@ -184,6 +208,10 @@ function separateData(data) {
 		stateD[magId][date]["totalTotalCirc"] += totalCirc;
 	}
 
+	for (var magId in stateD) {
+		stateD[magId].sortedDates.sort();
+	}
+
 	return stateD;
 }
 
@@ -198,10 +226,12 @@ var map = {
 	"currMagId":1,
 	"currDateId":"1931-06-30",
 	"mapData":{}, //data for a certain mag and date, dict keys states
+	"sortedDates":[],
 	"dataType": "totalCirc", //either newstand/single or mailsub D83200
 	scaleColor: d3.scaleLinear().range(["#FFED90", "#FF4D21"]),
 	setData: function() {
 		map.mapData = stateD[map.currMagId][map.currDateId];
+		map.sortedDates = stateD[map.currMagId].sortedDates;
 	},
 	setScaleColor: function() {
 		if (map.dataType == "newsStand") {
@@ -351,8 +381,8 @@ var geoMapPath = gMap.selectAll("path")
 		
 
 		toolTip
-			.style("top", mouseY + "px")
-			.style("left", mouseX + "px")
+			.style("top", mouseY - 50 + "px")
+			.style("left", mouseX - 400 + "px")
 			.html(stateName + "\n" +
 				magTitle + "\n" +
 				sampleIssueDate + "\n" +
@@ -386,17 +416,17 @@ var geoMapPath = gMap.selectAll("path")
 
 function selectMag(magId) {
 	map.currMagId = magId;
-	var dates = [];
-	for (var date in stateD[map.currMagId]) {
-		dates.push(date);
-	}
-	dates.sort();
-	map.currDateId = dates[0];
+	// map.currDateId = dates[0]; //get the first possible date
+	map.sortedDates = stateD[map.currMagId].sortedDates;
+	map.currDateId = map.sortedDates[0];
+	var dates = map.sortedDates;
+
 	map.setData()
 	map.setScaleColor()
 	map.updateMap()
 	map.updateLegendScale();
 	$("#mag-date-selector").html(genDateSelection());
+	updateSliderRange(dates.length - 1);
 }
 
 function selectDate(date) {
@@ -405,6 +435,7 @@ function selectDate(date) {
 	map.setScaleColor()
 	map.updateMap()
 	map.updateLegendScale();
+	updateTitle();
 }
 
 function selectMagType(magType) {
@@ -412,6 +443,7 @@ function selectMagType(magType) {
 	map.setScaleColor()
 	map.updateMap()
 	map.updateLegendScale();
+	updateTitle();
 }
 
 function updateTitle() {
@@ -429,16 +461,50 @@ function updateTitle() {
 		);
 }
 
+function onSliderChange(i) {
+	var selectedDate = map.sortedDates[i];
+
+	if (selectedDate == map.currDateId) {
+		return;
+	}
+	selectDate(selectedDate);
+}
+
+function updateSliderRange(newMax) {
+	$("#slider-labels").find("label").remove();
+
+	$("#slider").slider("option", "max", newMax);
+	var slider = $("#slider").slider("value", 0);
+
+
+	slider.each(function() {
+		var sliderParams = $(this).data().uiSlider.options;
+
+		var max = sliderParams.max;
+		var min = sliderParams.min;
+		var step = sliderParams.step;
+
+		var nVals = (max-min)/step;
+
+		var sortedDates = map.sortedDates;
+		for (var i = 0; i < nVals + 1; i++) {
+			var ele = $('<label>' +sortedDates[i]+ '</label>')
+				.css("top", 98 - (i/nVals*100) + "%")
+				.css("left", "35%")
+				.css("position", "absolute")
+				.css("font-size", "10px");
+				// .css("padding", "100px");
+			$("#slider-labels").append(ele);
+		}
+	});
+
+}
+
 
 function genDateSelection() {
   var start = '<select class="form-control mag-date-select">';
-  var dates = [];
-  for (var date in stateD[map.currMagId]) {
-  	dates.push(date);
-  }
-  dates.sort();
-  for (var i in dates) {
-  	var date = dates[i];
+  for (var i in map.sortedDates) {
+  	var date = map.sortedDates[i];
   	start+="<option value='"+date+"'>"+date+"</option>";
   }
   var end = '</select>';
@@ -446,9 +512,24 @@ function genDateSelection() {
 }
 
 $(document).ready(function(){
+	//build the slider
+	var slider = $("#slider").slider({
+		orientation: 'vertical',
+		value: 0,
+		min: 0,
+		max: 6, //set max to the number of dates you have - 1
+		step: 1,
+		slide: function(event, ui) {
+			var index = ui.value;
+			onSliderChange(index);
+		}
+	});
+
+
 	map.updateMap();
 	map.updateLegendScale();
 	updateTitle();
+	updateSliderRange(stateD[map.currMagId].sortedDates.length - 1);
 
 
 	function genMagSelection() {
@@ -476,13 +557,11 @@ $(document).ready(function(){
 	$(document).on("change", ".mag-date-select", function(){ //on select magazine
 	    var date = $(this).children(":selected").val();
 	    selectDate(date);
-		updateTitle();
 	  });
 
 	$(document).on("change", ".mag-type-select", function(){ //on select magazine
 	    var magType = $(this).children(":selected").val();
 	    selectMagType(magType);
-		updateTitle();
 	  });
 });
 </script>
