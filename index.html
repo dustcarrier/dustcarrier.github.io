@@ -10,7 +10,16 @@
 // $.ajax({
 // 	url: 'https://sites.jmu.edu/exporttocsv.php',
 // 	data: {'table':'circ_data_by_loc_with_statenames'},
-// 	type: 'post',
-// 	success: function(output) {console.log(output)}
+// 	dataType: "text",
+// 	type: 'GET',
+// 	success: function(output) {
+// 		console.log(output)
+// 	},
+// 	error: function(e, b, c) {
+// 		// console.log(e);
+// 		// console.log(b);
+// 		// console.log(e.responseText)
+// 		// console.log(e.getResponseHeader("Access-Control-Allow-Origin"));
+// 	}
 // });
 </script>

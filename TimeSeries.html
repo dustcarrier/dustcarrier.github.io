@@ -24,7 +24,7 @@
   padding-top: 1.5vw;
   padding-bottom: 2.0vw;
   height: 15vh;
-  font-size: 0.8vw;
+  font-size: 1.5vh;
 }
 .panel-remove{
   position: absolute;
@@ -122,9 +122,9 @@ var lineRef = g.append("rect") //reference line
 
 var gCharts = svg.append("g") //holds the path and invisible data points
   .attr("id", "gcharts")
-  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")")
-  .attr("height", height - gMargins.top - gMargins.bottom)
-  .attr("width", width - gMargins.right - gMargins.left);
+  .attr("transform", "translate("+gMargins.left+","+gMargins.top+")");
+  // .attr("height", height - gMargins.top - gMargins.bottom)
+  // .attr("width", width - gMargins.right - gMargins.left);
 
 //Generates the path
 var lineFn = d3.line()
@@ -346,6 +346,12 @@ function drawLine() {
     .attr("opacity", 0)
     .remove();
 
+  gCharts.selectAll("circle")
+    .data([])
+    .exit()
+    .remove();
+
+
   var abrvs = activePanels.abrvs;
   var paths = activePanels.paths;
   for (var i = 0; i < abrvs.length; i++) {
@@ -383,44 +389,119 @@ var overlay = svg.append("rect")
   .on("mouseout", function(){lineRef.style("display", "none")})
   .on("mouseover", function(){lineRef.style("display", "inline")})
 
-// function zoomAxes(isZoomIn) {
-//   var oldDomain = xScale.domain();
-//   var oldXMin = oldDomain[0];
-//   var oldXMax = oldDomain[1];
 
-//   var minDate = new Date(oldXMin.getTime());
-//   var maxDate = new Date(oldXMax.getTime());
+var zoomState = 1;
 
-//   var zoomFactor = isZoomIn ? -5 : 5; //5 years
+function zoomAxes(isZoomIn) {
+  var minDomainYearsRange = 6;
+  var maxDomainYearsRange = 120;
 
-//   minDate.setFullYear(minDate.getFullYear() - zoomFactor);
-//   maxDate.setFullYear(maxDate.getFullYear() + zoomFactor);
+  var currZoomState = d3.event.transform.k;
+  if (currZoomState > zoomState) {
+    isZoomIn = true;
+    zoomState = currZoomState;
+  } else if (currZoomState < zoomState) {
+    isZoomIn = false;
+    zoomState = currZoomState;
+  } else {
+    return;
+  }
 
-//   xScale.domain([minDate, maxDate]);
+  var oldDomain = xScale.domain();
+  var oldXMin = oldDomain[0];
+  var oldXMax = oldDomain[1];
 
-//   var xAxis = d3.axisBottom(xScale);
-//   gXAxis.transition().call(xAxis);
+  var minDate = new Date(oldXMin.getTime());
+  var maxDate = new Date(oldXMax.getTime());
 
-//   drawLine();
-// }
+  var zoomFactor = isZoomIn ? -3 : 3; //5 years
 
-function zoomAxes() {
+  var minYear = minDate.getFullYear();
+  var maxYear = maxDate.getFullYear();
+
+  if (maxYear - minYear < minDomainYearsRange && isZoomIn) {
+    return;
+  }
+  if (maxYear - minYear > maxDomainYearsRange && !isZoomIn) {
+    return;
+  }
+
+  minDate.setFullYear(minYear - zoomFactor);
+  maxDate.setFullYear(maxYear + zoomFactor);
+
+  xScale.domain([minDate, maxDate]);
+
   var xAxis = d3.axisBottom(xScale);
-  console.log(d3.event.transform)
-  xScale = d3.event.transform.rescaleX(xScale);
-  gXAxis.call(xAxis.scale(xScale));
+  gXAxis.transition().call(xAxis);
+
   drawLine();
 }
 
-// d3.zoomTransformation(this);
+var zoom = d3.zoom()
+  .on("zoom", zoomAxes);
 
-// var zoom = d3.zoom()
-//   // .x(xScale)
-//   .scaleExtent([1,2])
-//   .translateExtent([[(new Date()).setFullYear(1850), 0], [(new Date()).setFullYear(1970), 0]])
-//   .on("zoom", zoomAxes);
+svg.call(zoom); //add the zoom element
 
-// overlay.call(zoom);
+
+var shiftX = 0;
+function dragStarted() {
+  shiftX = 0;
+}
+
+function dragInProcess() {
+  var minDomainYear = 1850;
+  var maxDomainYear = 1950;
+
+  var shiftRight;
+
+  var dx = d3.event.x;
+  if (dx - shiftX > 0) {
+    shiftRight = true;
+  } else if (dx - shiftX < 0) {
+    shiftRight = false;
+  } else {
+    return;
+  }
+
+  var oldDomain = xScale.domain();
+  var oldXMin = oldDomain[0];
+  var oldXMax = oldDomain[1];
+
+  var minDate = new Date(oldXMin.getTime());
+  var maxDate = new Date(oldXMax.getTime());
+
+  var shiftFactor = shiftRight ? -1 : 1; //5 years
+
+  var minYear = minDate.getFullYear();
+  var maxYear = maxDate.getFullYear();
+
+  if (maxYear > maxDomainYear && !shiftRight) {
+    return;
+  }
+  if (minYear < minDomainYear && shiftFactor) {
+    return;
+  }
+
+  minDate.setFullYear(minYear + shiftFactor);
+  maxDate.setFullYear(maxYear + shiftFactor);
+
+  xScale.domain([minDate, maxDate]);
+
+  var xAxis = d3.axisBottom(xScale);
+  gXAxis.transition().call(xAxis);
+
+  drawLine();
+}
+
+function dragEnded() {}
+
+var drag = d3.drag()
+  .subject(function (d) {return {x: 0, y: d3.event.y}})
+  .on("start", dragStarted)
+  .on("drag", dragInProcess)
+  .on("end", dragEnded);
+
+overlay.call(drag);
 
 
 // d3.csv("circ_data_by_loc_with_statenames.csv", function(data) {
@@ -474,6 +555,7 @@ $(document).ready(function(){
   $(document).on("click", ".glyphicon-plus", function(){ //on click plus
     $(this).parent().html(genMagSelection());
   });
+
   $(document).on("change", ".mag-select", function(){ //on select magazine
     var magAbrv = $(this).children(":selected").val();
     var panel = $(this).parent();
@@ -484,6 +566,7 @@ $(document).ready(function(){
     loadData(magAbrv);
     $(this).remove();
   })
+
   $(document).on("click", ".glyphicon-remove-circle", function(){ //on remove panel
     var parent = $(this).parent();
     var abrv = parent.attr("magabrv");
