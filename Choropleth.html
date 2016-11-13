@@ -1,7 +1,7 @@
 <link rel="shortcut icon" href=""> 
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.0/themes/smoothness/jquery-ui.css">
 
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
 <style type="text/css">
 path:hover {
@@ -31,13 +31,12 @@ path:hover {
 }
 </style>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+<script src="library/jquery.min.js"></script>
+<script src="library/bootstrap.min.js"></script>
+<script src="library/d3.v4.min.js"></script>
+<script src="library/jquery-ui.js"></script>
 
-<script src="https://d3js.org/d3.v4.min.js"></script>
 <body>
-	
 	<h1 id="map-title"></h4>
 	<div class="container">
 		<div class="row">
@@ -100,7 +99,9 @@ path:hover {
 </div>
 
 <script src="us-states-data.js"></script>
-<script src="circ_data.js"></script>
+<!-- <script src="circ_data.js"></script> -->
+
+<script src="phpQuery.js"></script>
 <script src="CensusData.js"></script>
 
 <script type="text/javascript">
@@ -221,7 +222,7 @@ function separateData(data) {
 	var stateD = {}; //magId:date:state:{mailSubs, singleCopies}
 	for (var i = 0; i < data.length; i++) {
 		var row = data[i];
-		var magId = +row.magazine_id;
+		var magId = row.magazine_id;
 		var date = row.sample_period_end_date;
 		var sampleIssueDate = row.sample_issue_date;
 		var state = row.State;
@@ -312,7 +313,6 @@ function separateData(data) {
 	return stateD;
 }
 
-var stateD = separateData(circData);
 
 //proportion to census data or raw numbers
 //raw numbers
@@ -328,9 +328,13 @@ var map = {
 	"isCensus":false,
 	"displayPercentage":true,
 	scaleColor: d3.scaleLinear().range(["#FFED90", "#FF4D21"]),
-	setData: function() {
+	setData: function() { //sets data to the current mag id and date
 		map.mapData = stateD[map.currMagId][map.currDateId];
 		map.sortedDates = stateD[map.currMagId].sortedDates;
+	},
+	setInitialDate: function() {
+		map.currDateId = map.sortedDates[0];
+		map.setData();
 	},
 	setScaleColor: function() {
 		var domainMax;
@@ -449,37 +453,6 @@ if (map.dataType == "newsStand") {
 			})
 	}
 }
-//initialize mapData
-// map.setData();
-// map.setScaleColor();
-
-
-
-
-//state name, magazine title, specific issue, reporting period, newsstand sales, subscription sales, and total circulation
-
-var magIdMap = {/*4	:"Atlantic Monthly",
-				2	:"Blue Book",
-				3	:"Collier's",
-				10	:"Liberty",
-				8	:"Popular Publications",
-				13	:"Redbook",
-				5	:"Saturday Evening Post",
-				11	:"Scribners",
-				6	:"Street & Smith",
-				9	:"Thrilling Group",
-				12	:"True Story",*/
-				1	:"Black Mask",
-				7	:"New Yorker"
-};
-
-var idMagMap = (function(){
-									var d = {}
-									for (var id in magIdMap) {
-										d[magIdMap[id]] = id;
-									}
-									return d;
-								})(); //anon function
 
 var geoMapPath = gMap.selectAll("path")
 	.data(statesJson.features)
@@ -556,32 +529,16 @@ var geoMapPath = gMap.selectAll("path")
 
 
 
-
-
-
-
-//begin jquery
-
-//need selector for mailSubs or singleCopy/newsStand
-
-//need selector for magazine and date range
-//just make selector for magazine
-
-//possibly have slider for which date
-
-
 function selectMag(magId) {
 	map.currMagId = magId;
-	// map.currDateId = dates[0]; //get the first possible date
-	map.sortedDates = stateD[map.currMagId].sortedDates;
-	map.currDateId = map.sortedDates[0];
-	var dates = map.sortedDates;
 
 	map.setData()
+	map.setInitialDate();
 	map.setScaleColor()
 	map.updateMap()
 	map.updateLegendScale();
 	$("#mag-date-selector").html(genDateSelection());
+	var dates = map.sortedDates;
 	updateSliderRange(dates.length - 1);
 }
 
@@ -687,68 +644,93 @@ function genDateSelection() {
   return start+end;
 }
 
-$(document).ready(function(){
-	//build the slider
-	var slider = $("#slider").slider({
-		orientation: 'vertical',
-		value: 0,
-		min: 0,
-		max: 6, //set max to the number of dates you have - 1
-		step: 1,
-		slide: function(event, ui) {
-			var index = ui.value;
-			onSliderChange(index);
+
+var magIdMap = {};
+
+var idMagMap = {};
+
+$.when(dbQuery("magazines"), dbQuery("circ_data_by_loc_with_statenames")).done(function(csvMag, csvGeoCirc){
+
+	
+
+	var circData = d3.csvParse(csvGeoCirc[0], function(d){
+		return d;
+	});
+	stateD = separateData(circData);
+
+	d3.csvParse(csvMag[0], function(d){
+		if (d.magazine_id in stateD) {
+			magIdMap[d.magazine_id] = d.title;
+			idMagMap[d.title] = d.magazine_id;
 		}
 	});
 
-	selectMag(1); //select default to be BlackMask
-	map.updateMap();
-	map.updateLegendScale();
-	updateTitle();
-	updateSliderRange(stateD[map.currMagId].sortedDates.length - 1);
+	$(document).ready(function(){
+		//build the slider
+		var slider = $("#slider").slider({
+			orientation: 'vertical',
+			value: 0,
+			min: 0,
+			max: 6, //set max to the number of dates you have - 1
+			step: 1,
+			slide: function(event, ui) {
+				var index = ui.value;
+				onSliderChange(index);
+			}
+		});
 
-
-	function genMagSelection() {
-	  var start = '<select class="form-control mag-select">';
-	  // start+='<option value="" hidden>Select a magazine</option>';
-	  for (var id in magIdMap) {
-	  	var magName = magIdMap[id];
-	  	start+="<option value='"+magName+"'>"+magName+"</option>";
-	  }
-	  var end = '</select>';
-	  return start+end;
-	}
-	$("#mag-selector").html(genMagSelection());
-
-	
-	$("#mag-date-selector").html(genDateSelection());
-
-	$(document).on("change", ".mag-select", function(){ //on select magazine
-	    var magName = $(this).children(":selected").val();
-	    var magId = idMagMap[magName];
-	    selectMag(magId);
+		selectMag("1"); //select default to be BlackMask
+		map.updateMap();
+		map.updateLegendScale();
 		updateTitle();
-	  });
-
-	$(document).on("change", ".mag-date-select", function(){ //on select magazine
-	    var date = $(this).children(":selected").val();
-	    selectDate(date);
-	  });
-
-	$(document).on("change", ".mag-type-select", function(){ //on select magazine
-	    var magType = $(this).children(":selected").val();
-	    selectMagType(magType);
-	  });
-
-	$(document).on("change", ".census-select", function(){ //on select magazine
-	    var isCensus = $(this).children(":selected").val();
-	    selectCensus(isCensus);
-	  });
+		updateSliderRange(stateD[map.currMagId].sortedDates.length - 1);
 
 
-	$(document).on("change", ".presentation-select", function(){ //on select magazine
-	    var percentage = $(this).children(":selected").val();
-	    selectPresentation(percentage);
-	  });
+		function genMagSelection() {
+		  var start = '<select class="form-control mag-select">';
+		  // start+='<option value="" hidden>Select a magazine</option>';
+		  for (var id in magIdMap) {
+		  	var magName = magIdMap[id];
+		  	start+="<option value='"+magName+"'>"+magName+"</option>";
+		  }
+		  var end = '</select>';
+		  return start+end;
+		}
+		$("#mag-selector").html(genMagSelection());
+
+		
+		$("#mag-date-selector").html(genDateSelection());
+
+		$(document).on("change", ".mag-select", function(){ //on select magazine
+		    var magName = $(this).children(":selected").val();
+		    var magId = idMagMap[magName];
+		    selectMag(magId);
+			updateTitle();
+		  });
+
+		$(document).on("change", ".mag-date-select", function(){ //on select magazine
+		    var date = $(this).children(":selected").val();
+		    selectDate(date);
+		  });
+
+		$(document).on("change", ".mag-type-select", function(){ //on select magazine
+		    var magType = $(this).children(":selected").val();
+		    selectMagType(magType);
+		  });
+
+		$(document).on("change", ".census-select", function(){ //on select magazine
+		    var isCensus = $(this).children(":selected").val();
+		    selectCensus(isCensus);
+		  });
+
+
+		$(document).on("change", ".presentation-select", function(){ //on select magazine
+		    var percentage = $(this).children(":selected").val();
+		    selectPresentation(percentage);
+		  });
+	});
+
 });
+
+
 </script>
