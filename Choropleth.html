@@ -154,7 +154,8 @@ var gLegendScale = svg.append("g")
 	.attr("width", width)
 	.attr("height", height);
 
-var toolTip = d3.select("#toolTip");
+var toolTip = d3.select("#toolTip")
+	.style("display", "None");
 svg.on("mouseout", function() {
 	toolTip.transition()
 		.style("display", "None")
